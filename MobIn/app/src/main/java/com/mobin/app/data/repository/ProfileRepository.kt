@@ -1,0 +1,50 @@
+package com.mobin.app.data.repository
+
+import com.mobin.app.data.model.Profile
+import com.mobin.app.data.model.ProfileUpdate
+import com.mobin.app.data.remote.SupabaseClient
+import com.mobin.app.util.Constants
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.storage.storage
+import io.ktor.http.ContentType
+
+class ProfileRepository {
+
+    private val supabase = SupabaseClient.client
+
+    suspend fun getProfile(): Result<Profile> = runCatching {
+        val userId = supabase.auth.currentUserOrNull()?.id
+            ?: error("User not logged in")
+        supabase.from(Constants.PROFILES_TABLE)
+            .select {
+                filter { eq("id", userId) }
+            }
+            .decodeSingle<Profile>()
+    }
+
+    suspend fun updateProfile(update: ProfileUpdate): Result<Unit> = runCatching {
+        val userId = supabase.auth.currentUserOrNull()?.id
+            ?: error("User not logged in")
+        supabase.from(Constants.PROFILES_TABLE)
+            .update(update) {
+                filter { eq("id", userId) }
+            }
+    }
+
+    /**
+     * Uploads avatar bytes to Supabase Storage and returns the public URL.
+     */
+    suspend fun uploadAvatar(userId: String, imageBytes: ByteArray): Result<String> = runCatching {
+        val path = "$userId/avatar.jpg"
+        supabase.storage
+            .from(Constants.AVATARS_BUCKET)
+            .upload(path = path, data = imageBytes) {
+                contentType = ContentType.Image.JPEG
+                upsert = true
+            }
+        supabase.storage
+            .from(Constants.AVATARS_BUCKET)
+            .publicUrl(path)
+    }
+}
