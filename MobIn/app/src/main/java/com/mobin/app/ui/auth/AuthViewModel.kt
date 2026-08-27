@@ -29,7 +29,25 @@ class AuthViewModel : ViewModel() {
             _uiState.value = AuthUiState(isLoading = true)
             repository.signIn(email.trim(), password)
                 .onSuccess { onSuccess() }
-                .onFailure { _uiState.value = AuthUiState(error = "Incorrect email or password.") }
+                .onFailure { error ->
+                    android.util.Log.e("AuthViewModel", "signIn failed for $email", error)
+                    val rawMsg = error.message ?: ""
+                    val causeMsg = error.cause?.message ?: ""
+                    val fullError = "$rawMsg $causeMsg"
+                    val displayMsg = when {
+                        fullError.contains("Invalid login credentials", ignoreCase = true) ->
+                            "Incorrect email or password."
+                        fullError.contains("Email not confirmed", ignoreCase = true) ->
+                            "Please confirm your email before signing in."
+                        fullError.contains("Unable to resolve host", ignoreCase = true) ->
+                            "DNS lookup failed: Could not resolve Supabase host. Check device internet / DNS."
+                        fullError.contains("ConnectException", ignoreCase = true) || fullError.contains("SocketTimeout", ignoreCase = true) ->
+                            "Connection timed out. Check network connection."
+                        rawMsg.isNotBlank() -> rawMsg
+                        else -> "${error::class.simpleName}: ${error.localizedMessage ?: "Unknown error"}"
+                    }
+                    _uiState.value = AuthUiState(error = displayMsg)
+                }
         }
     }
 

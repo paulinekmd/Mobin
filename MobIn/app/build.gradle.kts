@@ -76,8 +76,8 @@ dependencies {
     implementation(libs.supabase.auth)
     implementation(libs.supabase.storage)
 
-    // Ktor HTTP engine (required by Supabase SDK)
-    implementation(libs.ktor.client.android)
+    // Ktor HTTP engine (OkHttp is recommended for Supabase SDK on Android)
+    implementation(libs.ktor.client.okhttp)
 
     // Image loading
     implementation(libs.coil.compose)
