@@ -43,8 +43,9 @@ class ProfileRepository {
                 contentType = ContentType.Image.JPEG
                 upsert = true
             }
-        supabase.storage
+        val baseUrl = supabase.storage
             .from(Constants.AVATARS_BUCKET)
             .publicUrl(path)
+        "$baseUrl?t=${System.currentTimeMillis()}"
     }
 }

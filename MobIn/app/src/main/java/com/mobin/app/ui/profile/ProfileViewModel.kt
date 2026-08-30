@@ -88,34 +88,74 @@ class ProfileViewModel : ViewModel() {
     }
 
     fun uploadAvatar(context: Context, uri: Uri) {
-        val userId = currentUserId ?: return
+        val userId = currentUserId
+        if (userId == null) {
+            _uiState.value = _uiState.value.copy(error = "User session expired. Please log in again.")
+            return
+        }
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                val bytes = context.contentResolver.openInputStream(uri)?.readBytes()
-                    ?: throw Exception("Cannot read image")
+                val bytes = compressImage(context, uri)
                 profileRepo.uploadAvatar(userId, bytes)
                     .onSuccess { url ->
                         profileRepo.updateProfile(ProfileUpdate(avatarUrl = url))
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             profile = _uiState.value.profile?.copy(avatarUrl = url),
-                            successMessage = "Profile photo updated!",
+                            successMessage = "Profile photo updated successfully!",
                         )
                     }
                     .onFailure { error ->
+                        android.util.Log.e("ProfileViewModel", "uploadAvatar failed", error)
+                        val msg = if (error.message?.contains("bucket", ignoreCase = true) == true || error.message?.contains("not found", ignoreCase = true) == true) {
+                            "Storage bucket 'avatars' not found. Please ensure the avatars bucket is created in Supabase Storage."
+                        } else {
+                            error.message ?: "Failed to upload photo."
+                        }
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            error = error.message ?: "Failed to upload photo.",
+                            error = msg,
                         )
                     }
             } catch (e: Exception) {
+                android.util.Log.e("ProfileViewModel", "Image processing failed", e)
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = e.message ?: "Unknown error",
+                    error = e.message ?: "Failed to process selected image.",
                 )
             }
         }
+    }
+
+    private fun compressImage(context: Context, uri: Uri): ByteArray {
+        val inputStream = context.contentResolver.openInputStream(uri) ?: throw Exception("Cannot open image file")
+        val originalBitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+            ?: throw Exception("Cannot decode image. Please select a valid photo.")
+
+        val maxDimension = 512
+        val width = originalBitmap.width
+        val height = originalBitmap.height
+        val scale = if (width > maxDimension || height > maxDimension) {
+            maxDimension.toFloat() / maxOf(width, height)
+        } else {
+            1f
+        }
+
+        val scaledBitmap = if (scale < 1f) {
+            android.graphics.Bitmap.createScaledBitmap(
+                originalBitmap,
+                (width * scale).toInt(),
+                (height * scale).toInt(),
+                true
+            )
+        } else {
+            originalBitmap
+        }
+
+        val outputStream = java.io.ByteArrayOutputStream()
+        scaledBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, outputStream)
+        return outputStream.toByteArray()
     }
 
     fun changePassword(currentPassword: String, newPassword: String, onSuccess: () -> Unit) {

@@ -15,6 +15,10 @@ import com.mobin.app.ui.profile.ChangePasswordScreen
 import com.mobin.app.ui.profile.ReviewInfoScreen
 import com.mobin.app.ui.splash.SplashScreen
 
+import com.mobin.app.ui.category.CategoryListScreen
+import com.mobin.app.ui.details.PropertyDetailsScreen
+import com.mobin.app.ui.search.SearchScreen
+
 @Composable
 fun MobInNavGraph() {
     val navController = rememberNavController()
@@ -116,6 +120,16 @@ fun MobInNavGraph() {
 
         composable(Screen.Main.route) {
             MainScreen(
+                onNavigateToSearch = { navController.navigate(Screen.Search.route) },
+                onNavigateToCategoryList = { category ->
+                    navController.navigate(Screen.CategoryList.createRoute(category))
+                },
+                onNavigateToPropertyDetails = { propertyId ->
+                    navController.navigate(Screen.PropertyDetails.createRoute(propertyId))
+                },
+                onNavigateToChat = { chatId ->
+                    navController.navigate(Screen.Chat.createRoute(chatId))
+                },
                 onNavigateToReviewInfo = { navController.navigate(Screen.ReviewInfo.route) },
                 onNavigateToChangePassword = { navController.navigate(Screen.ChangePassword.route) },
                 onLogout = {
@@ -123,6 +137,58 @@ fun MobInNavGraph() {
                         popUpTo(0) { inclusive = true }
                     }
                 },
+            )
+        }
+
+        composable(Screen.Search.route) {
+            SearchScreen(
+                onBack = { navController.popBackStack() },
+                onPropertyClick = { property ->
+                    navController.navigate(Screen.PropertyDetails.createRoute(property.id))
+                },
+            )
+        }
+
+        composable(
+            route = Screen.CategoryList.route,
+            arguments = listOf(navArgument("categoryName") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val rawCategory = backStackEntry.arguments?.getString("categoryName") ?: "Boarding Houses"
+            val category = try {
+                java.net.URLDecoder.decode(rawCategory, java.nio.charset.StandardCharsets.UTF_8.toString())
+            } catch (e: Exception) { rawCategory }
+
+            CategoryListScreen(
+                categoryName = category,
+                onBack = { navController.popBackStack() },
+                onPropertyClick = { property ->
+                    navController.navigate(Screen.PropertyDetails.createRoute(property.id))
+                },
+            )
+        }
+
+        composable(
+            route = Screen.PropertyDetails.route,
+            arguments = listOf(navArgument("propertyId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val propertyId = backStackEntry.arguments?.getString("propertyId") ?: "1"
+            PropertyDetailsScreen(
+                propertyId = propertyId,
+                onBack = { navController.popBackStack() },
+                onMessageOwner = {
+                    navController.navigate(Screen.Chat.createRoute(propertyId))
+                },
+            )
+        }
+
+        composable(
+            route = Screen.Chat.route,
+            arguments = listOf(navArgument("chatId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val chatId = backStackEntry.arguments?.getString("chatId") ?: "1"
+            com.mobin.app.ui.chat.ChatScreen(
+                chatId = chatId,
+                onBack = { navController.popBackStack() },
             )
         }
 

@@ -1,4 +1,4 @@
-﻿package com.mobin.app.ui.main
+package com.mobin.app.ui.main
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -46,6 +46,10 @@ private val bottomNavItems = listOf(
 
 @Composable
 fun MainScreen(
+    onNavigateToSearch: () -> Unit = {},
+    onNavigateToCategoryList: (String) -> Unit = {},
+    onNavigateToPropertyDetails: (String) -> Unit = {},
+    onNavigateToChat: (String) -> Unit = {},
     onNavigateToReviewInfo: () -> Unit,
     onNavigateToChangePassword: () -> Unit,
     onLogout: () -> Unit,
@@ -125,9 +129,29 @@ fun MainScreen(
             startDestination = "home",
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable("home")  { HomeScreen() }
-            composable("saved") { HomeScreen() }
-            composable("chats") { HomeScreen() }
+            composable("home") {
+                HomeScreen(
+                    onSearchClick = onNavigateToSearch,
+                    onPropertyClick = { property -> onNavigateToPropertyDetails(property.id) },
+                    onSeeAllClick = { category -> onNavigateToCategoryList(category) },
+                )
+            }
+            composable("saved") {
+                com.mobin.app.ui.saved.SavedScreen(
+                    onPropertyClick = { property -> onNavigateToPropertyDetails(property.id) },
+                    onBack = {
+                        bottomNavController.navigate("home") {
+                            popUpTo(bottomNavController.graph.startDestinationId)
+                            launchSingleTop = true
+                        }
+                    },
+                )
+            }
+            composable("chats") {
+                com.mobin.app.ui.chat.MessagesScreen(
+                    onOpenChat = { chatId -> onNavigateToChat(chatId) },
+                )
+            }
             composable("profile") {
                 ProfileScreen(
                     onNavigateToReviewInfo = onNavigateToReviewInfo,

@@ -21,32 +21,39 @@ class AuthViewModel : ViewModel() {
     val uiState: StateFlow<AuthUiState> = _uiState
 
     fun signIn(email: String, password: String, onSuccess: () -> Unit) {
-        if (email.isBlank() || password.isBlank()) {
+        val cleanEmail = email.trim()
+        val cleanPassword = password.trim()
+        if (cleanEmail.isBlank() || cleanPassword.isBlank()) {
             _uiState.value = AuthUiState(error = "Please fill in all fields.")
             return
         }
         viewModelScope.launch {
             _uiState.value = AuthUiState(isLoading = true)
-            repository.signIn(email.trim(), password)
-                .onSuccess { onSuccess() }
+            repository.signIn(cleanEmail, cleanPassword)
+                .onSuccess {
+                    _uiState.value = AuthUiState(isSuccess = true)
+                    onSuccess()
+                }
                 .onFailure { error ->
-                    android.util.Log.e("AuthViewModel", "signIn failed for $email", error)
-                    val rawMsg = error.message ?: ""
-                    val causeMsg = error.cause?.message ?: ""
-                    val fullError = "$rawMsg $causeMsg"
-                    val displayMsg = when {
-                        fullError.contains("Invalid login credentials", ignoreCase = true) ->
+                    android.util.Log.e("AuthViewModel", "signIn failed for '$cleanEmail'", error)
+                    val raw = error.message ?: ""
+                    val displayError = when {
+                        raw.contains("Invalid login credentials", ignoreCase = true) ||
+                        raw.contains("invalid_credentials", ignoreCase = true) ->
                             "Incorrect email or password."
-                        fullError.contains("Email not confirmed", ignoreCase = true) ->
-                            "Please confirm your email before signing in."
-                        fullError.contains("Unable to resolve host", ignoreCase = true) ->
-                            "DNS lookup failed: Could not resolve Supabase host. Check device internet / DNS."
-                        fullError.contains("ConnectException", ignoreCase = true) || fullError.contains("SocketTimeout", ignoreCase = true) ->
-                            "Connection timed out. Check network connection."
-                        rawMsg.isNotBlank() -> rawMsg
-                        else -> "${error::class.simpleName}: ${error.localizedMessage ?: "Unknown error"}"
+                        raw.contains("Email not confirmed", ignoreCase = true) ||
+                        raw.contains("email_not_confirmed", ignoreCase = true) ->
+                            "Please confirm your email address before logging in."
+                        raw.contains("Unable to resolve host", ignoreCase = true) ||
+                        raw.contains("ConnectException", ignoreCase = true) ||
+                        raw.contains("No address associated with hostname", ignoreCase = true) ||
+                        raw.contains("timeout", ignoreCase = true) ->
+                            "Cannot reach server. Please check your internet connection or emulator Wi-Fi."
+                        else ->
+                            raw.ifBlank { "Incorrect email or password." }
                     }
-                    _uiState.value = AuthUiState(error = displayMsg)
+                    _uiState.value = AuthUiState(error = displayError)
+                }
                 }
         }
     }

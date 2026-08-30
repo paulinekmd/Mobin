@@ -20,6 +20,19 @@ sealed class Screen(val route: String) {
             return "reset_password/$encoded"
         }
     }
+    object Search          : Screen("search")
+    object CategoryList    : Screen("category_list/{categoryName}") {
+        fun createRoute(categoryName: String): String {
+            val encoded = URLEncoder.encode(categoryName.trim(), StandardCharsets.UTF_8.toString())
+            return "category_list/$encoded"
+        }
+    }
+    object PropertyDetails : Screen("property_details/{propertyId}") {
+        fun createRoute(propertyId: String): String = "property_details/$propertyId"
+    }
+    object Chat            : Screen("chat/{chatId}") {
+        fun createRoute(chatId: String): String = "chat/$chatId"
+    }
     object Main            : Screen("main")
     object ReviewInfo      : Screen("review_info")
     object ChangePassword  : Screen("change_password")
