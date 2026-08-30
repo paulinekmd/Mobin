@@ -54,7 +54,6 @@ class AuthViewModel : ViewModel() {
                     }
                     _uiState.value = AuthUiState(error = displayError)
                 }
-                }
         }
     }
 
