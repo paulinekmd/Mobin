@@ -47,6 +47,7 @@ fun PropertyDetailsScreen(
     propertyId: String,
     onBack: () -> Unit,
     onMessageOwner: () -> Unit = {},
+    onLandlordClick: () -> Unit = {},
     viewModel: PropertyDetailsViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -65,6 +66,7 @@ fun PropertyDetailsScreen(
             selectedImageIndex = uiState.selectedImageIndex,
             onSelectImage = { viewModel.selectImage(it) },
             onToggleSave = { viewModel.toggleSave() },
+            onLandlordClick = onLandlordClick,
             onShare = {
                 val sendIntent = Intent().apply {
                     action = Intent.ACTION_SEND
@@ -94,6 +96,7 @@ internal fun PropertyDetailsContent(
     selectedImageIndex: Int,
     onSelectImage: (Int) -> Unit,
     onToggleSave: () -> Unit,
+    onLandlordClick: () -> Unit = {},
     onShare: () -> Unit,
     onMessageOwner: () -> Unit,
     onBack: () -> Unit,
@@ -569,7 +572,10 @@ internal fun PropertyDetailsContent(
             )
             Spacer(Modifier.height(10.dp))
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable(onClick = onLandlordClick),
                 shape = RoundedCornerShape(16.dp),
                 color = White,
                 border = BorderStroke(1.dp, Color(0xFFEEEEEE)),

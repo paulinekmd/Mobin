@@ -178,6 +178,20 @@ fun MobInNavGraph() {
                 onMessageOwner = {
                     navController.navigate(Screen.Chat.createRoute(propertyId))
                 },
+                onLandlordClick = {
+                    navController.navigate(Screen.LandlordProfile.createRoute(propertyId))
+                },
+            )
+        }
+
+        composable(
+            route = Screen.LandlordProfile.route,
+            arguments = listOf(navArgument("propertyId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val propertyId = backStackEntry.arguments?.getString("propertyId") ?: "1"
+            com.mobin.app.ui.landlord.LandlordProfileScreen(
+                propertyId = propertyId,
+                onBack = { navController.popBackStack() },
             )
         }
 
