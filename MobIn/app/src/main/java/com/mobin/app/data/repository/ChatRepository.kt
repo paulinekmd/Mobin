@@ -125,7 +125,10 @@ class ChatRepository {
                     contactName = contactName,
                     contactEmail = dto.landlordEmail ?: "",
                     propertyName = propTitle,
-                    lastMessage = msgText,
+                    lastMessage = if (msgText.trim().let {
+                        it.contains("res.cloudinary.com") ||
+                        it.lowercase().let { l -> l.endsWith(".jpg") || l.endsWith(".jpeg") || l.endsWith(".png") || l.endsWith(".gif") || l.endsWith(".webp") }
+                    }) "📷 Image" else msgText,
                     lastTimestamp = formattedTime,
                     avatarUrl = prop?.imageUrl,
                     isOnline = true,

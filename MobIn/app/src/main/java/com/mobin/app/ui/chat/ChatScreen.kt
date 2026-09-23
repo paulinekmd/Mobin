@@ -261,54 +261,78 @@ fun ChatScreen(
     }
 }
 
+/** Returns true if [text] is a Cloudinary URL or ends with a common image extension. */
+private fun isImageUrl(text: String): Boolean {
+    val t = text.trim()
+    if (!t.startsWith("http://") && !t.startsWith("https://")) return false
+    if (t.contains("res.cloudinary.com")) return true
+    val lower = t.lowercase()
+    return lower.endsWith(".jpg") || lower.endsWith(".jpeg") ||
+        lower.endsWith(".png") || lower.endsWith(".gif") ||
+        lower.endsWith(".webp") || lower.endsWith(".bmp")
+}
+
 @Composable
 private fun ChatMessageBubble(
     message: ChatMessage,
     modifier: Modifier = Modifier,
 ) {
+    val isImage = isImageUrl(message.text)
+
     if (message.isFromCurrentUser) {
         // Outgoing Message (Right-aligned, Golden Yellow)
         Row(
             modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
         ) {
-            Surface(
-                shape = RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                    bottomStart = 16.dp,
-                    bottomEnd = 4.dp,
-                ),
-                color = Color(0xFFFBD67A), // Soft Golden Marigold
+            Column(
                 modifier = Modifier.widthIn(max = 280.dp),
+                horizontalAlignment = Alignment.End,
             ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                ) {
-                    Text(
-                        text = message.text,
-                        fontSize = 13.5.sp,
-                        color = Color(0xFF1E1E1E),
-                        lineHeight = 19.sp,
+                if (isImage) {
+                    AsyncImage(
+                        model = message.text.trim(),
+                        contentDescription = "Image message",
+                        modifier = Modifier
+                            .widthIn(max = 220.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.FillWidth,
                     )
-                    Spacer(Modifier.height(4.dp))
-                    Row(
-                        modifier = Modifier.align(Alignment.End),
-                        verticalAlignment = Alignment.CenterVertically,
+                } else {
+                    Surface(
+                        shape = RoundedCornerShape(
+                            topStart = 16.dp,
+                            topEnd = 16.dp,
+                            bottomStart = 16.dp,
+                            bottomEnd = 4.dp,
+                        ),
+                        color = Color(0xFFFBD67A), // Soft Golden Marigold
                     ) {
                         Text(
-                            text = message.timestamp,
-                            fontSize = 10.5.sp,
-                            color = Color(0xFF6B5808),
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.Filled.Check,
-                            contentDescription = "Delivered",
-                            tint = Color(0xFF6B5808),
-                            modifier = Modifier.size(12.dp),
+                            text = message.text,
+                            fontSize = 13.5.sp,
+                            color = Color(0xFF1E1E1E),
+                            lineHeight = 19.sp,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                         )
                     }
+                }
+                Spacer(Modifier.height(3.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = message.timestamp,
+                        fontSize = 10.5.sp,
+                        color = Color(0xFF888888),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = "Delivered",
+                        tint = Color(0xFF888888),
+                        modifier = Modifier.size(12.dp),
+                    )
                 }
             }
         }
@@ -336,22 +360,43 @@ private fun ChatMessageBubble(
 
             Spacer(Modifier.width(8.dp))
 
-            Surface(
-                shape = RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                    bottomEnd = 16.dp,
-                    bottomStart = 4.dp,
-                ),
-                color = Color(0xFFEAA67C), // Peach Amber
+            Column(
                 modifier = Modifier.widthIn(max = 260.dp),
+                horizontalAlignment = Alignment.Start,
             ) {
+                if (isImage) {
+                    AsyncImage(
+                        model = message.text.trim(),
+                        contentDescription = "Image message",
+                        modifier = Modifier
+                            .widthIn(max = 220.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.FillWidth,
+                    )
+                } else {
+                    Surface(
+                        shape = RoundedCornerShape(
+                            topStart = 16.dp,
+                            topEnd = 16.dp,
+                            bottomEnd = 16.dp,
+                            bottomStart = 4.dp,
+                        ),
+                        color = Color(0xFFEAA67C), // Peach Amber
+                    ) {
+                        Text(
+                            text = message.text,
+                            fontSize = 13.5.sp,
+                            color = Color(0xFF1E1E1E),
+                            lineHeight = 19.sp,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(3.dp))
                 Text(
-                    text = message.text,
-                    fontSize = 13.5.sp,
-                    color = Color(0xFF1E1E1E),
-                    lineHeight = 19.sp,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    text = message.timestamp,
+                    fontSize = 10.5.sp,
+                    color = Color(0xFF888888),
                 )
             }
         }
