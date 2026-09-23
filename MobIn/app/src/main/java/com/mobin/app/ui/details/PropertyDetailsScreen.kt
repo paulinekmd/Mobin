@@ -558,8 +558,8 @@ internal fun PropertyDetailsContent(
                     .height(150.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .clickable {
-                        val query = "${property.title}, ${property.location}"
-                        val encoded = android.net.Uri.encode(query)
+                        val addressQuery = property.location.ifBlank { property.title }
+                        val encoded = android.net.Uri.encode(addressQuery)
                         val mapIntent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("geo:0,0?q=$encoded")).apply {
                             setPackage("com.google.android.apps.maps")
                         }
