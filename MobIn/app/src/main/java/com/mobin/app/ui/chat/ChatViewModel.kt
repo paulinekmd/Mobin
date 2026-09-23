@@ -25,8 +25,11 @@ class ChatViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState
 
-    fun loadChat(chatId: String) {
+    fun loadChat(chatId: String, initialMessage: String = "") {
         currentChatId = chatId
+        if (initialMessage.isNotBlank() && _uiState.value.inputText.isBlank()) {
+            _uiState.value = _uiState.value.copy(inputText = initialMessage)
+        }
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 

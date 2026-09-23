@@ -38,14 +38,15 @@ import com.mobin.app.ui.theme.*
 @Composable
 fun ChatScreen(
     chatId: String,
+    initialMessage: String = "",
     onBack: () -> Unit,
     viewModel: ChatViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
 
-    LaunchedEffect(chatId) {
-        viewModel.loadChat(chatId)
+    LaunchedEffect(chatId, initialMessage) {
+        viewModel.loadChat(chatId, initialMessage)
     }
 
     LaunchedEffect(uiState.messages.size) {
