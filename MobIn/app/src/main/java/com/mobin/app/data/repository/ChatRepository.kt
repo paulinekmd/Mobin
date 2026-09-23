@@ -1,4 +1,4 @@
-﻿package com.mobin.app.data.repository
+package com.mobin.app.data.repository
 
 import com.mobin.app.data.model.ChatConversation
 import com.mobin.app.data.model.ChatMessage
@@ -82,6 +82,9 @@ class ChatRepository {
             }
 
             for (dto in dtos) {
+                val msgText = dto.message?.trim() ?: continue
+                if (msgText.isBlank()) continue
+
                 val chatId = dto.propertyId?.ifBlank { null } ?: dto.id
                 val isFromUser = dto.senderEmail.equals(userEmail, ignoreCase = true) ||
                         dto.senderName.equals(getCurrentUserName(), ignoreCase = true)
@@ -100,7 +103,7 @@ class ChatRepository {
                     id = dto.id,
                     chatId = chatId,
                     senderId = if (isFromUser) "user" else (dto.landlordId ?: "landlord"),
-                    text = dto.message,
+                    text = msgText,
                     timestamp = formattedTime,
                     isFromCurrentUser = isFromUser,
                 )
@@ -108,21 +111,30 @@ class ChatRepository {
                 val list = conversationMap.getOrPut(chatId) { mutableListOf() }
                 list.add(msg)
 
+                val prop = propertyRepository.getPropertyById(chatId)
+                val propTitle = dto.propertyName?.ifBlank { null } ?: prop?.title ?: "Accommodation"
+                val contactName = if (!isFromUser && !dto.senderName.isNullOrBlank()) {
+                    dto.senderName
+                } else {
+                    prop?.ownerName ?: "Landlord"
+                }
+
                 conversationHeaders[chatId] = ChatConversation(
                     id = chatId,
                     propertyId = dto.propertyId ?: chatId,
-                    contactName = if (dto.senderEmail != userEmail && !dto.senderName.isNullOrBlank()) dto.senderName else (dto.propertyName ?: "Mary Ann Dasalo"),
+                    contactName = contactName,
                     contactEmail = dto.landlordEmail ?: "",
-                    propertyName = dto.propertyName ?: "Accommodation",
-                    lastMessage = dto.message,
+                    propertyName = propTitle,
+                    lastMessage = msgText,
                     lastTimestamp = formattedTime,
+                    avatarUrl = prop?.imageUrl,
                     isOnline = true,
                     unreadCount = if (!isFromUser) 1 else 0,
                 )
             }
 
             _messagesFlow.value = conversationMap.mapValues { it.value.toList() }
-            _conversationsFlow.value = conversationHeaders.values.toList()
+            _conversationsFlow.value = conversationHeaders.values.reversed()
         } catch (e: Exception) {
             android.util.Log.e("ChatRepository", "Failed to refresh remote messages: ${e.message}", e)
         }
@@ -131,23 +143,7 @@ class ChatRepository {
     suspend fun getConversations(): Result<List<ChatConversation>> = withContext(Dispatchers.IO) {
         runCatching {
             refreshRemoteMessages()
-            val list = _conversationsFlow.value
-            if (list.isNotEmpty()) {
-                list
-            } else {
-                listOf(
-                    ChatConversation(
-                        id = "1",
-                        propertyId = "1",
-                        contactName = "Mary Ann Dasalo",
-                        propertyName = "Casa Urgello",
-                        lastMessage = "Hi! I'm interested in this property. Is it available?",
-                        lastTimestamp = "10:33 AM",
-                        isOnline = true,
-                        unreadCount = 0,
-                    )
-                )
-            }
+            _conversationsFlow.value
         }
     }
 
@@ -159,11 +155,12 @@ class ChatRepository {
         ChatConversation(
             id = chatId,
             propertyId = chatId,
-            contactName = property?.ownerName ?: "Mary Ann Dasalo",
-            contactEmail = "landlord@mobin.app",
-            propertyName = property?.title ?: "Casa Urgello",
+            contactName = property?.ownerName ?: "Landlord",
+            contactEmail = "landlord@mobin.ph",
+            propertyName = property?.title ?: "Accommodation",
             lastMessage = "Start a conversation",
             lastTimestamp = "Just now",
+            avatarUrl = property?.imageUrl,
             isOnline = true,
             unreadCount = 0,
         )
@@ -188,12 +185,36 @@ class ChatRepository {
             isFromCurrentUser = true,
         )
 
-        // Local instant update
+        // Local instant update for message history
         val currentList = (_messagesFlow.value[chatId] ?: emptyList()).toMutableList()
         currentList.add(newMessage)
         val updatedMap = _messagesFlow.value.toMutableMap()
         updatedMap[chatId] = currentList
         _messagesFlow.value = updatedMap
+
+        // Local instant update for conversations tab
+        val landlordName = property?.ownerName ?: "Landlord"
+        val propTitle = property?.title ?: "Accommodation"
+        val existingConversations = _conversationsFlow.value.toMutableList()
+        val existingIndex = existingConversations.indexOfFirst { it.id == chatId }
+        val updatedHeader = ChatConversation(
+            id = chatId,
+            propertyId = chatId,
+            contactName = landlordName,
+            contactEmail = "landlord@mobin.ph",
+            propertyName = propTitle,
+            lastMessage = text.trim(),
+            lastTimestamp = time,
+            avatarUrl = property?.imageUrl,
+            isOnline = true,
+            unreadCount = 0,
+        )
+        if (existingIndex >= 0) {
+            existingConversations[existingIndex] = updatedHeader
+        } else {
+            existingConversations.add(0, updatedHeader)
+        }
+        _conversationsFlow.value = existingConversations
 
         // Remote Supabase insert
         try {
@@ -203,7 +224,7 @@ class ChatRepository {
                 senderName = userName,
                 senderEmail = userEmail,
                 propertyId = chatId,
-                propertyName = property?.title ?: "Casa Urgello",
+                propertyName = property?.title ?: "Accommodation",
                 message = text.trim(),
             )
             supabase.from("messages").insert(insert)

@@ -1,4 +1,4 @@
-﻿package com.mobin.app.ui.chat
+package com.mobin.app.ui.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,9 +32,10 @@ class ChatViewModel : ViewModel() {
 
             val conv = chatRepository.getConversation(chatId)
             _uiState.value = _uiState.value.copy(conversation = conv)
+            chatRepository.refreshRemoteMessages()
 
             ChatRepository.messagesFlow.collectLatest { map ->
-                val messages = map[chatId] ?: map["1"] ?: emptyList()
+                val messages = map[chatId] ?: emptyList()
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     messages = messages,

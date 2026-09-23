@@ -39,7 +39,7 @@ data class SupabaseMessageDto(
     @SerialName("sender_email") val senderEmail: String? = null,
     @SerialName("property_id") val propertyId: String? = null,
     @SerialName("property_name") val propertyName: String? = null,
-    val message: String = "",
+    val message: String? = null,
     @SerialName("created_at") val createdAt: String? = null,
 )
 
@@ -51,5 +51,5 @@ data class SupabaseMessageInsert(
     @SerialName("sender_email") val senderEmail: String? = null,
     @SerialName("property_id") val propertyId: String? = null,
     @SerialName("property_name") val propertyName: String? = null,
-    val message: String = "",
+    val message: String? = null,
 )

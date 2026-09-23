@@ -1,4 +1,4 @@
-﻿package com.mobin.app.ui.chat
+package com.mobin.app.ui.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -26,6 +26,15 @@ class MessagesViewModel : ViewModel() {
 
     init {
         observeConversations()
+        refresh()
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            chatRepository.refreshRemoteMessages()
+            _uiState.value = _uiState.value.copy(isLoading = false)
+        }
     }
 
     private fun observeConversations() {

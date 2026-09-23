@@ -1,4 +1,4 @@
-﻿package com.mobin.app.ui.chat
+package com.mobin.app.ui.chat
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -35,6 +35,10 @@ fun MessagesScreen(
     viewModel: MessagesViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
 
     MessagesContent(
         uiState = uiState,
