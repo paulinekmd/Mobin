@@ -344,29 +344,26 @@ internal fun PropertyDetailsContent(
                     modifier = Modifier.weight(1f),
                 )
 
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = Color(0xFFFFF7EA),
-                    border = BorderStroke(1.dp, Color(0xFFFEECCB)),
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onLandlordClick)
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Star,
-                            contentDescription = null,
-                            tint = GoldenMarigold,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = property.rating.toString(),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF333333),
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = "Landlord Rating",
+                        tint = GoldenMarigold,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = "${property.rating} Landlord Rating",
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF4A4A4A),
+                    )
                 }
             }
 
