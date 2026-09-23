@@ -1,4 +1,4 @@
-﻿package com.mobin.app.data.remote
+package com.mobin.app.data.remote
 
 import com.mobin.app.BuildConfig
 import io.github.jan.supabase.auth.Auth

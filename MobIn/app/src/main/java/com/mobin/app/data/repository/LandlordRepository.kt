@@ -1,7 +1,11 @@
-﻿package com.mobin.app.data.repository
+package com.mobin.app.data.repository
 
 import com.mobin.app.data.model.LandlordProfile
 import com.mobin.app.data.model.LandlordReview
+import com.mobin.app.data.model.LandlordReviewDto
+import com.mobin.app.data.model.LandlordReviewInsert
+import com.mobin.app.data.remote.SupabaseClient
+import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,58 +16,61 @@ import java.util.Locale
 
 class LandlordRepository {
 
-    companion object {
-        private val defaultReviews = mutableListOf(
-            LandlordReview(
-                id = "r1",
-                reviewerName = "John D.",
-                rentalPeriod = "Rented · May 2026",
-                rating = 5,
-                comment = "Very responsive and easy to communicate with. The place was clean and exactly as described. Highly recommended!",
-                createdAt = 1779000000000L,
-            ),
-            LandlordReview(
-                id = "r2",
-                reviewerName = "April L.",
-                rentalPeriod = "Rented · November 2026",
-                rating = 4,
-                comment = "Great landlord! Always quick to respond and takes good care of the property.",
-                createdAt = 1764000000000L,
-            ),
-            LandlordReview(
-                id = "r3",
-                reviewerName = "Miguel S.",
-                rentalPeriod = "Rented · January 2026",
-                rating = 5,
-                comment = "Smooth transaction and very accommodating. Thank you!",
-                createdAt = 1768000000000L,
-            ),
-        )
+    private val supabase = SupabaseClient.client
 
+    companion object {
         private val _landlordFlow = MutableStateFlow<Map<String, LandlordProfile>>(emptyMap())
         val landlordFlow: StateFlow<Map<String, LandlordProfile>> = _landlordFlow
     }
 
     suspend fun getLandlordProfile(ownerName: String, joinedDate: String): LandlordProfile = withContext(Dispatchers.IO) {
-        val currentMap = _landlordFlow.value
-        if (currentMap.containsKey(ownerName)) {
-            return@withContext currentMap[ownerName]!!
+        val cleanName = ownerName.ifBlank { "Mary Ann Dasalo" }
+        var realReviews = emptyList<LandlordReview>()
+
+        // 1. Fetch live reviews from Supabase landlord_reviews table
+        try {
+            val dtos = supabase.from("landlord_reviews")
+                .select {
+                    filter {
+                        eq("landlord_name", cleanName)
+                    }
+                }
+                .decodeList<LandlordReviewDto>()
+
+            realReviews = dtos.map { it.toLandlordReview() }
+            android.util.Log.d("LandlordRepository", "Fetched ${realReviews.size} live reviews for '$cleanName'")
+        } catch (e: Exception) {
+            android.util.Log.d("LandlordRepository", "landlord_reviews table fetch note: ${e.message}")
+            // Check in-memory store if previously added
+            _landlordFlow.value[cleanName]?.let { return@withContext it }
+        }
+
+        val starCounts = mutableMapOf(5 to 0, 4 to 0, 3 to 0, 2 to 0, 1 to 0)
+        realReviews.forEach { r ->
+            starCounts[r.rating] = (starCounts[r.rating] ?: 0) + 1
+        }
+
+        val reviewCount = realReviews.size
+        val avgRating = if (reviewCount > 0) {
+            String.format(Locale.US, "%.1f", realReviews.sumOf { it.rating }.toDouble() / reviewCount).toDoubleOrNull() ?: 5.0
+        } else {
+            0.0
         }
 
         val profile = LandlordProfile(
-            id = ownerName.lowercase().replace(" ", "_"),
-            name = ownerName.ifBlank { "Mary Ann Dasalo" },
+            id = cleanName.lowercase().replace(" ", "_"),
+            name = cleanName,
             memberSince = if (joinedDate.isNotBlank()) "Member since $joinedDate" else "Member since March 2025",
             isVerified = true,
-            overallRating = 4.5,
-            reviewCount = 32,
-            starCounts = mapOf(5 to 22, 4 to 6, 3 to 2, 2 to 1, 1 to 1),
-            reviews = defaultReviews.toList(),
+            overallRating = avgRating,
+            reviewCount = reviewCount,
+            starCounts = starCounts,
+            reviews = realReviews,
         )
 
-        val updated = currentMap.toMutableMap()
-        updated[ownerName] = profile
-        _landlordFlow.value = updated
+        val updatedMap = _landlordFlow.value.toMutableMap()
+        updatedMap[cleanName] = profile
+        _landlordFlow.value = updatedMap
 
         profile
     }
@@ -74,9 +81,27 @@ class LandlordRepository {
         comment: String,
         reviewerName: String = "You",
     ): LandlordProfile = withContext(Dispatchers.IO) {
-        val current = getLandlordProfile(ownerName, "")
+        val cleanName = ownerName.ifBlank { "Mary Ann Dasalo" }
         val currentMonthYear = SimpleDateFormat("MMMM yyyy", Locale.US).format(Date())
-        val newReview = LandlordReview(
+
+        // 1. Insert into Supabase landlord_reviews table
+        try {
+            val insert = LandlordReviewInsert(
+                landlordName = cleanName,
+                reviewerName = reviewerName,
+                rentalPeriod = "Rented · $currentMonthYear",
+                rating = rating,
+                comment = comment.trim(),
+            )
+            supabase.from("landlord_reviews").insert(insert)
+            android.util.Log.d("LandlordRepository", "Inserted live review into Supabase for '$cleanName'")
+        } catch (e: Exception) {
+            android.util.Log.e("LandlordRepository", "Remote review insert note: ${e.message}", e)
+        }
+
+        // 2. Refresh profile with newly added review
+        val current = _landlordFlow.value[cleanName] ?: getLandlordProfile(cleanName, "")
+        val newLocalReview = LandlordReview(
             id = "r_${System.currentTimeMillis()}",
             reviewerName = reviewerName,
             rentalPeriod = "Rented · $currentMonthYear",
@@ -85,13 +110,13 @@ class LandlordRepository {
             createdAt = System.currentTimeMillis(),
         )
 
-        val updatedReviews = listOf(newReview) + current.reviews
+        val updatedReviews = listOf(newLocalReview) + current.reviews.filter { it.id != newLocalReview.id }
         val newStarCounts = current.starCounts.toMutableMap()
         newStarCounts[rating] = (newStarCounts[rating] ?: 0) + 1
 
-        val newTotalReviews = current.reviewCount + 1
+        val newTotalReviews = updatedReviews.size
         val totalStars = updatedReviews.sumOf { it.rating }
-        val newAvg = String.format(Locale.US, "%.1f", (totalStars.toDouble() / updatedReviews.size.coerceAtLeast(1))).toDoubleOrNull() ?: 4.5
+        val newAvg = String.format(Locale.US, "%.1f", (totalStars.toDouble() / newTotalReviews.coerceAtLeast(1))).toDoubleOrNull() ?: 5.0
 
         val updatedProfile = current.copy(
             reviews = updatedReviews,
@@ -101,7 +126,7 @@ class LandlordRepository {
         )
 
         val updatedMap = _landlordFlow.value.toMutableMap()
-        updatedMap[ownerName] = updatedProfile
+        updatedMap[cleanName] = updatedProfile
         _landlordFlow.value = updatedMap
 
         updatedProfile

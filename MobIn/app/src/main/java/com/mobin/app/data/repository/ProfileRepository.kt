@@ -33,9 +33,18 @@ class ProfileRepository {
     }
 
     /**
-     * Uploads avatar bytes to Supabase Storage and returns the public URL.
+     * Uploads avatar bytes to Cloudinary (with Supabase Storage fallback) and returns the public URL.
      */
     suspend fun uploadAvatar(userId: String, imageBytes: ByteArray): Result<String> = runCatching {
+        val cloudinaryResult = com.mobin.app.data.remote.CloudinaryUploader.uploadImage(
+            imageBytes = imageBytes,
+            fileName = "avatar_$userId.jpg",
+            folder = "avatars",
+        )
+        if (cloudinaryResult.isSuccess) {
+            return@runCatching cloudinaryResult.getOrThrow()
+        }
+
         val path = "$userId/avatar.jpg"
         supabase.storage
             .from(Constants.AVATARS_BUCKET)

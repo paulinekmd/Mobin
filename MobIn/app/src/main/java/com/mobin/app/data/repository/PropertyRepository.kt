@@ -97,18 +97,20 @@ class PropertyRepository {
     suspend fun getProperties(): Result<List<Property>> = withContext(Dispatchers.IO) {
         runCatching {
             val currentSaved = _savedPropertyIds.value
-            // Attempt to query Supabase if a properties/listings table exists
+            // 1. Fetch live listings from Supabase properties table
             try {
-                val remote = supabase.from("properties")
+                val dtos = supabase.from("properties")
                     .select()
-                    .decodeList<Property>()
-                if (remote.isNotEmpty()) {
-                    return@runCatching remote.map { it.copy(isSaved = currentSaved.contains(it.id)) }
+                    .decodeList<com.mobin.app.data.model.PropertyDto>()
+                if (dtos.isNotEmpty()) {
+                    android.util.Log.d("PropertyRepository", "Fetched ${dtos.size} properties from Supabase")
+                    return@runCatching dtos.map { it.toProperty(isSaved = currentSaved.contains(it.id.toString())) }
                 }
             } catch (e: Exception) {
-                // Table doesn't exist yet on backend, safely fallback to local defaults
+                android.util.Log.e("PropertyRepository", "Failed to decode remote properties: ${e.message}", e)
             }
 
+            // Fallback to defaults if empty or error
             defaultProperties.map {
                 it.copy(isSaved = currentSaved.contains(it.id))
             }

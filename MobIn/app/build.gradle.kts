@@ -30,6 +30,10 @@ android {
         // Supabase credentials — add SUPABASE_URL and SUPABASE_ANON_KEY to local.properties
         buildConfigField("String", "SUPABASE_URL", "\"${localProperties["SUPABASE_URL"] ?: ""}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties["SUPABASE_ANON_KEY"] ?: ""}\"")
+
+        // Cloudinary credentials
+        buildConfigField("String", "CLOUDINARY_CLOUD_NAME", "\"${localProperties["CLOUDINARY_CLOUD_NAME"] ?: "drjicvvih"}\"")
+        buildConfigField("String", "CLOUDINARY_UPLOAD_PRESET", "\"${localProperties["CLOUDINARY_UPLOAD_PRESET"] ?: "mobin_mobile"}\"")
     }
 
     buildTypes {
