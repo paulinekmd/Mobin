@@ -136,16 +136,16 @@ fun ChatScreen(
         bottomBar = {
             Surface(
                 color = White,
-                shadowElevation = 6.dp,
+                shadowElevation = 4.dp,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .imePadding()
-                    .navigationBarsPadding(),
+                    .imePadding(),
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                        .navigationBarsPadding()
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     // Attachment (+) button
