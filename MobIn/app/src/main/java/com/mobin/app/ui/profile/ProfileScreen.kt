@@ -1,4 +1,4 @@
-﻿package com.mobin.app.ui.profile
+package com.mobin.app.ui.profile
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -12,7 +12,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
@@ -92,29 +91,15 @@ internal fun ProfileContent(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = Color(0xFFFDFDFD),
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = "Profile",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1E1E1E),
-                            ),
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateToReviewInfo) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = AmberSpice,
-                        )
-                    }
+                    Text(
+                        text = "Profile",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E1E1E),
+                        ),
+                    )
                 },
                 actions = {
                     IconButton(onClick = {}) {
@@ -125,7 +110,7 @@ internal fun ProfileContent(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFFDFDFD)),
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color(0xFFFDFDFD)),
             )
         },
     ) { padding ->
