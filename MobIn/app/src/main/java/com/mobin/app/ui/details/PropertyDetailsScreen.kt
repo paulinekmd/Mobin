@@ -101,6 +101,7 @@ internal fun PropertyDetailsContent(
     onMessageOwner: () -> Unit,
     onBack: () -> Unit,
 ) {
+    val context = LocalContext.current
     val formattedPrice = NumberFormat.getNumberInstance(Locale.US).format(property.price.toInt())
 
     Scaffold(
@@ -523,7 +524,24 @@ internal fun PropertyDetailsContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp)
-                    .clip(RoundedCornerShape(16.dp)),
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable {
+                        val query = "${property.title}, ${property.location}"
+                        val encoded = android.net.Uri.encode(query)
+                        val mapIntent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("geo:0,0?q=$encoded")).apply {
+                            setPackage("com.google.android.apps.maps")
+                        }
+                        try {
+                            context.startActivity(mapIntent)
+                        } catch (e: Exception) {
+                            // If Google Maps app is not installed, open in browser
+                            val browserIntent = Intent(
+                                Intent.ACTION_VIEW,
+                                android.net.Uri.parse("https://www.google.com/maps/search/?api=1&query=$encoded")
+                            )
+                            context.startActivity(browserIntent)
+                        }
+                    },
                 shape = RoundedCornerShape(16.dp),
                 color = Color(0xFFE9F1F7),
                 border = BorderStroke(1.dp, Color(0xFFD6E4EF)),
@@ -532,27 +550,40 @@ internal fun PropertyDetailsContent(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Filled.Map,
-                            contentDescription = "Map location",
-                            tint = Color(0xFF1976D2),
-                            modifier = Modifier.size(36.dp),
-                        )
-                        Spacer(Modifier.height(6.dp))
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(12.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFD4E7F5)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Map,
+                                contentDescription = "Map location",
+                                tint = Color(0xFF1976D2),
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
                         Text(
                             text = property.location,
                             style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Bold,
                                 color = Color(0xFF1976D2),
-                                fontSize = 13.sp,
+                                fontSize = 13.5.sp,
                             ),
                         )
+                        Spacer(Modifier.height(2.dp))
                         Text(
-                            text = "Near SWU PHINMA & Taboan Market",
+                            text = "Tap to open in Google Maps ↗",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = Color(0xFF5C6B73),
-                                fontSize = 11.sp,
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Medium,
                             ),
                         )
                     }
