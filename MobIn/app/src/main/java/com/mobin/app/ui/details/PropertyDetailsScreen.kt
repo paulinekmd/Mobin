@@ -124,12 +124,11 @@ internal fun PropertyDetailsContent(
         list.distinct()
     }
 
-    var activeImages by remember(allGalleryImages) {
-        mutableStateOf(allGalleryImages)
+    var selectedImageIndex by remember(property.id, allGalleryImages) {
+        mutableIntStateOf(0)
     }
 
-    val currentMainImage = activeImages.firstOrNull() ?: property.imageUrl
-    val smallThumbnailImages = activeImages.drop(1)
+    val currentMainImage = allGalleryImages.getOrNull(selectedImageIndex) ?: property.imageUrl
 
     var showReportDialog by remember { mutableStateOf(false) }
     var selectedReason by remember { mutableStateOf("Inaccurate information or photos") }
@@ -265,24 +264,21 @@ internal fun PropertyDetailsContent(
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    if (smallThumbnailImages.isNotEmpty()) {
-                        smallThumbnailImages.forEachIndexed { thumbIdx, thumbUrl ->
+                    if (allGalleryImages.isNotEmpty()) {
+                        allGalleryImages.forEachIndexed { thumbIdx, thumbUrl ->
+                            val isSelected = thumbIdx == selectedImageIndex
                             Box(
                                 modifier = Modifier
                                     .size(48.dp)
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(Color(0xFFEBEBEB))
                                     .border(
-                                        width = 1.dp,
-                                        color = Color(0xFFE0E0E0),
+                                        width = if (isSelected) 2.dp else 1.dp,
+                                        color = if (isSelected) GoldenMarigold else Color(0xFFE0E0E0),
                                         shape = RoundedCornerShape(10.dp),
                                     )
                                     .clickable {
-                                        val newImages = activeImages.toMutableList()
-                                        val oldMain = newImages[0]
-                                        newImages[0] = newImages[thumbIdx + 1]
-                                        newImages[thumbIdx + 1] = oldMain
-                                        activeImages = newImages
+                                        selectedImageIndex = thumbIdx
                                     },
                                 contentAlignment = Alignment.Center,
                             ) {
@@ -294,7 +290,7 @@ internal fun PropertyDetailsContent(
                                 )
                             }
                         }
-                    } else if (allGalleryImages.isEmpty()) {
+                    } else {
                         repeat(3) {
                             Box(
                                 modifier = Modifier
