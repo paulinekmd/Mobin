@@ -23,7 +23,11 @@ class LandlordRepository {
         val landlordFlow: StateFlow<Map<String, LandlordProfile>> = _landlordFlow
     }
 
-    suspend fun getLandlordProfile(ownerName: String, joinedDate: String): LandlordProfile = withContext(Dispatchers.IO) {
+    suspend fun getLandlordProfile(
+        ownerName: String,
+        joinedDate: String,
+        knownAvatarUrl: String? = null,
+    ): LandlordProfile = withContext(Dispatchers.IO) {
         val cleanName = ownerName.ifBlank { "Mary Ann Dasalo" }
         var realReviews = emptyList<LandlordReview>()
 
@@ -45,6 +49,21 @@ class LandlordRepository {
             _landlordFlow.value[cleanName]?.let { return@withContext it }
         }
 
+        // 2. Fetch avatar if not provided
+        var avatarUrl = knownAvatarUrl
+        if (avatarUrl.isNullOrBlank()) {
+            try {
+                val profiles = supabase.from("profiles")
+                    .select()
+                    .decodeList<com.mobin.app.data.model.Profile>()
+                avatarUrl = profiles.firstOrNull {
+                    it.fullName?.trim()?.equals(cleanName.trim(), ignoreCase = true) == true
+                }?.avatarUrl
+            } catch (e: Exception) {
+                // Ignore
+            }
+        }
+
         val starCounts = mutableMapOf(5 to 0, 4 to 0, 3 to 0, 2 to 0, 1 to 0)
         realReviews.forEach { r ->
             starCounts[r.rating] = (starCounts[r.rating] ?: 0) + 1
@@ -61,6 +80,7 @@ class LandlordRepository {
             id = cleanName.lowercase().replace(" ", "_"),
             name = cleanName,
             memberSince = if (joinedDate.isNotBlank()) "Member since $joinedDate" else "Member since March 2025",
+            avatarUrl = avatarUrl,
             isVerified = true,
             overallRating = avgRating,
             reviewCount = reviewCount,

@@ -49,10 +49,11 @@ data class PropertyDto(
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,
 ) {
-    fun toProperty(isSaved: Boolean = false): Property {
+    fun toProperty(isSaved: Boolean = false, avatarUrl: String? = null): Property {
         val allImages = mutableListOf<String>()
         if (!image.isNullOrBlank()) allImages.add(image)
         photos?.filter { it.isNotBlank() }?.let { allImages.addAll(it) }
+        val distinctImages = allImages.distinct()
 
         val isVer = verificationStatus?.equals("Verified", ignoreCase = true) == true ||
                 verification?.equals("Verified", ignoreCase = true) == true
@@ -78,15 +79,15 @@ data class PropertyDto(
             price = rent ?: 3500.0,
             availableBeds = 3,
             rating = 4.5,
-            imageUrl = image?.ifBlank { null } ?: photos?.firstOrNull()?.ifBlank { null },
-            images = allImages,
+            imageUrl = distinctImages.firstOrNull() ?: image?.ifBlank { null },
+            images = distinctImages,
             isSaved = isSaved,
             isVerified = isVer,
             overview = description?.ifBlank { null }
                 ?: "Spacious and comfortable accommodation located in a peaceful and accessible area close to universities, convenience stores, and transportation hubs.",
             amenities = amenities?.ifEmpty { null } ?: listOf("WiFi", "CCTV", "Study Area", "Laundry Area"),
             ownerName = landlordName?.ifBlank { null } ?: "Mary Ann Dasalo",
-            ownerAvatarUrl = null,
+            ownerAvatarUrl = avatarUrl,
             ownerJoined = "March 2025",
         )
     }

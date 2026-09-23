@@ -6,6 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -116,6 +117,20 @@ internal fun PropertyDetailsContent(
     val context = LocalContext.current
     val formattedPrice = NumberFormat.getNumberInstance(Locale.US).format(property.price.toInt())
 
+    val allGalleryImages = remember(property.id, property.images, property.imageUrl) {
+        val list = mutableListOf<String>()
+        if (!property.imageUrl.isNullOrBlank()) list.add(property.imageUrl)
+        property.images.filter { it.isNotBlank() }.forEach { list.add(it) }
+        list.distinct()
+    }
+
+    var activeImages by remember(allGalleryImages) {
+        mutableStateOf(allGalleryImages)
+    }
+
+    val currentMainImage = activeImages.firstOrNull() ?: property.imageUrl
+    val smallThumbnailImages = activeImages.drop(1)
+
     var showReportDialog by remember { mutableStateOf(false) }
     var selectedReason by remember { mutableStateOf("Inaccurate information or photos") }
     var reportDetails by remember { mutableStateOf("") }
@@ -218,9 +233,9 @@ internal fun PropertyDetailsContent(
                     .background(Color(0xFFE2E4E8)),
                 contentAlignment = Alignment.Center,
             ) {
-                if (!property.imageUrl.isNullOrBlank()) {
+                if (!currentMainImage.isNullOrBlank()) {
                     AsyncImage(
-                        model = property.imageUrl,
+                        model = currentMainImage,
                         contentDescription = property.title,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
@@ -243,32 +258,68 @@ internal fun PropertyDetailsContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // 4 Thumbnail previews
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    repeat(4) { idx ->
-                        val isCurrent = selectedImageIndex == idx
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFFEBEBEB))
-                                .border(
-                                    width = if (isCurrent) 2.dp else 1.dp,
-                                    color = if (isCurrent) GoldenMarigold else Color(0xFFE0E0E0),
-                                    shape = RoundedCornerShape(10.dp),
+                // Small thumbnail previews
+                Row(
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (smallThumbnailImages.isNotEmpty()) {
+                        smallThumbnailImages.forEachIndexed { thumbIdx, thumbUrl ->
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFFEBEBEB))
+                                    .border(
+                                        width = 1.dp,
+                                        color = Color(0xFFE0E0E0),
+                                        shape = RoundedCornerShape(10.dp),
+                                    )
+                                    .clickable {
+                                        val newImages = activeImages.toMutableList()
+                                        val oldMain = newImages[0]
+                                        newImages[0] = newImages[thumbIdx + 1]
+                                        newImages[thumbIdx + 1] = oldMain
+                                        activeImages = newImages
+                                    },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                AsyncImage(
+                                    model = thumbUrl,
+                                    contentDescription = "Thumbnail ${thumbIdx + 1}",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop,
                                 )
-                                .clickable { onSelectImage(idx) },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Image,
-                                contentDescription = null,
-                                tint = Color(0xFF9E9E9E),
-                                modifier = Modifier.size(22.dp),
-                            )
+                            }
+                        }
+                    } else if (allGalleryImages.isEmpty()) {
+                        repeat(3) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFFEBEBEB))
+                                    .border(
+                                        width = 1.dp,
+                                        color = Color(0xFFE0E0E0),
+                                        shape = RoundedCornerShape(10.dp),
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Image,
+                                    contentDescription = null,
+                                    tint = Color(0xFF9E9E9E),
+                                    modifier = Modifier.size(22.dp),
+                                )
+                            }
                         }
                     }
                 }
+
+                Spacer(Modifier.width(8.dp))
 
                 // Save, Share & Report Buttons
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {

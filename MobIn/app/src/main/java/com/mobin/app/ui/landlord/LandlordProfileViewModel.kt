@@ -1,4 +1,4 @@
-﻿package com.mobin.app.ui.landlord
+package com.mobin.app.ui.landlord
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -38,9 +38,10 @@ class LandlordProfileViewModel : ViewModel() {
             val property = propertyRepository.getPropertyById(propertyId)
             val ownerName = property?.ownerName ?: "Mary Ann Dasalo"
             val ownerJoined = property?.ownerJoined ?: "March 2025"
+            val ownerAvatar = property?.ownerAvatarUrl
             currentOwnerName = ownerName
 
-            val profile = landlordRepository.getLandlordProfile(ownerName, ownerJoined)
+            val profile = landlordRepository.getLandlordProfile(ownerName, ownerJoined, ownerAvatar)
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 profile = profile,

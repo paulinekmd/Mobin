@@ -122,9 +122,30 @@ class PropertyRepository {
                 val dtos = supabase.from("properties")
                     .select()
                     .decodeList<com.mobin.app.data.model.PropertyDto>()
+
+                val profileList = try {
+                    supabase.from("profiles")
+                        .select()
+                        .decodeList<com.mobin.app.data.model.Profile>()
+                } catch (e: Exception) {
+                    emptyList()
+                }
+
                 if (dtos.isNotEmpty()) {
                     android.util.Log.d("PropertyRepository", "Fetched ${dtos.size} properties from Supabase")
-                    return@runCatching dtos.map { it.toProperty(isSaved = currentSaved.contains(it.id.toString())) }
+                    val properties = dtos.map { dto ->
+                        val matchedAvatar = profileList.firstOrNull { prof ->
+                            (!dto.landlordId.isNullOrBlank() && prof.id.equals(dto.landlordId, ignoreCase = true)) ||
+                            (!dto.landlordEmail.isNullOrBlank() && prof.email?.equals(dto.landlordEmail, ignoreCase = true) == true) ||
+                            (!dto.landlordName.isNullOrBlank() && prof.fullName?.trim()?.equals(dto.landlordName.trim(), ignoreCase = true) == true)
+                        }?.avatarUrl
+
+                        dto.toProperty(
+                            isSaved = currentSaved.contains(dto.id.toString()),
+                            avatarUrl = matchedAvatar,
+                        )
+                    }
+                    return@runCatching properties
                 }
             } catch (e: Exception) {
                 android.util.Log.e("PropertyRepository", "Failed to decode remote properties: ${e.message}", e)

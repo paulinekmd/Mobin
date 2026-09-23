@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -32,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.mobin.app.data.model.LandlordProfile
 import com.mobin.app.data.model.LandlordReview
 import com.mobin.app.ui.theme.*
@@ -89,16 +91,26 @@ fun LandlordProfileScreen(
                         modifier = Modifier
                             .size(76.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFF2F2F2))
-                            .padding(2.dp),
+                            .background(Color(0xFFF2F2F2)),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Person,
-                            contentDescription = profile.name,
-                            tint = Color(0xFF7A7A7A),
-                            modifier = Modifier.size(46.dp),
-                        )
+                        if (!profile.avatarUrl.isNullOrBlank()) {
+                            AsyncImage(
+                                model = profile.avatarUrl,
+                                contentDescription = profile.name,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop,
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Outlined.Person,
+                                contentDescription = profile.name,
+                                tint = Color(0xFF7A7A7A),
+                                modifier = Modifier.size(46.dp),
+                            )
+                        }
                     }
 
                     Spacer(Modifier.width(16.dp))
