@@ -4,6 +4,7 @@ import com.mobin.app.data.model.Property
 import com.mobin.app.data.remote.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class PropertyRepository {
@@ -90,8 +91,27 @@ class PropertyRepository {
     )
 
     companion object {
-        private val _savedPropertyIds = kotlinx.coroutines.flow.MutableStateFlow<Set<String>>(setOf("1")) // Start with initial saved item or empty
+        private val _savedPropertyIds = kotlinx.coroutines.flow.MutableStateFlow<Set<String>>(emptySet())
         val savedPropertyIdsFlow: kotlinx.coroutines.flow.StateFlow<Set<String>> = _savedPropertyIds
+        private var isLoadedFromDataStore = false
+    }
+
+    init {
+        loadSavedIdsFromDataStore()
+    }
+
+    private fun loadSavedIdsFromDataStore() {
+        if (isLoadedFromDataStore) return
+        isLoadedFromDataStore = true
+        kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+            try {
+                com.mobin.app.util.DataStoreManager.getSavedPropertyIds().collect { ids ->
+                    _savedPropertyIds.value = ids
+                }
+            } catch (e: Exception) {
+                // Graceful fallback
+            }
+        }
     }
 
     suspend fun getProperties(): Result<List<Property>> = withContext(Dispatchers.IO) {
@@ -139,6 +159,11 @@ class PropertyRepository {
             true
         }
         _savedPropertyIds.value = current
+        try {
+            com.mobin.app.util.DataStoreManager.setSavedPropertyIds(current)
+        } catch (e: Exception) {
+            // Graceful fallback
+        }
         isNowSaved
     }
 }
