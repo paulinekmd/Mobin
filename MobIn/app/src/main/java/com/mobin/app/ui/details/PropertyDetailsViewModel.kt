@@ -1,4 +1,4 @@
-﻿package com.mobin.app.ui.details
+package com.mobin.app.ui.details
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,6 +20,7 @@ data class PropertyDetailsUiState(
 class PropertyDetailsViewModel : ViewModel() {
 
     private val propertyRepository = PropertyRepository()
+    private val reportRepository = com.mobin.app.data.repository.ReportRepository()
 
     private val _uiState = MutableStateFlow(PropertyDetailsUiState())
     val uiState: StateFlow<PropertyDetailsUiState> = _uiState
@@ -69,5 +70,18 @@ class PropertyDetailsViewModel : ViewModel() {
 
     fun selectImage(index: Int) {
         _uiState.value = _uiState.value.copy(selectedImageIndex = index)
+    }
+
+    fun submitReport(reason: String, details: String?, onResult: (Boolean) -> Unit) {
+        val prop = _uiState.value.property ?: return
+        viewModelScope.launch {
+            val result = reportRepository.submitReport(
+                propertyId = prop.id,
+                propertyName = prop.title,
+                reason = reason,
+                details = details,
+            )
+            onResult(result.isSuccess)
+        }
     }
 }
