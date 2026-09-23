@@ -327,15 +327,15 @@ internal fun ProfileContent(
                 Column {
                     ProfileMenuRow(
                         icon = Icons.Outlined.HelpOutline,
-                        title = "Personal Information",
-                        subtitle = "View and update your personal details",
+                        title = "Help Center",
+                        subtitle = "Frequently asked questions and support",
                         onClick = {},
                     )
                     HorizontalDivider(color = Color(0xFFF3F3F3), thickness = 1.dp)
                     ProfileMenuRow(
                         icon = Icons.Outlined.ChatBubbleOutline,
-                        title = "Change Password",
-                        subtitle = "Update your account password",
+                        title = "Contact Us",
+                        subtitle = "Get in touch with the Mob'in team",
                         onClick = {},
                     )
                 }
