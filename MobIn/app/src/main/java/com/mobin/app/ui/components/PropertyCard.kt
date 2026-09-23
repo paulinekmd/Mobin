@@ -86,14 +86,13 @@ fun PropertyCard(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(6.dp)
-                        .size(32.dp)
-                        .background(Color.White.copy(alpha = 0.85f), CircleShape),
+                        .size(28.dp),
                 ) {
                     Icon(
                         imageVector = if (property.isSaved) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                         contentDescription = "Save property",
                         tint = if (property.isSaved) GoldenMarigold else Color(0xFFBF6B04),
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }

@@ -230,14 +230,13 @@ private fun CategoryPropertyCard(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(8.dp)
-                        .size(36.dp)
-                        .background(Color.White.copy(alpha = 0.85f), CircleShape),
+                        .size(32.dp),
                 ) {
                     Icon(
                         imageVector = if (property.isSaved) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                         contentDescription = "Save",
                         tint = if (property.isSaved) GoldenMarigold else Color(0xFFBF6B04),
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(22.dp),
                     )
                 }
             }
