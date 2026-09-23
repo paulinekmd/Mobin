@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -100,20 +101,56 @@ fun CategoryListScreen(
             )
         },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp),
-        ) {
-            items(uiState.filteredProperties, key = { it.id }) { property ->
-                CategoryPropertyCard(
-                    property = property,
-                    onClick = { onPropertyClick(property) },
-                    onToggleFavorite = { viewModel.toggleFavorite(property.id) },
-                )
+        if (uiState.filteredProperties.isEmpty() && !uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Outlined.Home,
+                        contentDescription = null,
+                        tint = Color(0xFFBDBDBD),
+                        modifier = Modifier.size(54.dp),
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    Text(
+                        text = "No ${uiState.displayTitle.lowercase()} found",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF333333),
+                            fontSize = 16.sp,
+                        ),
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "Check back soon for new listings",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color(0xFF888888),
+                            fontSize = 13.sp,
+                        ),
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp),
+            ) {
+                items(uiState.filteredProperties, key = { it.id }) { property ->
+                    CategoryPropertyCard(
+                        property = property,
+                        onClick = { onPropertyClick(property) },
+                        onToggleFavorite = { viewModel.toggleFavorite(property.id) },
+                    )
+                }
             }
         }
     }

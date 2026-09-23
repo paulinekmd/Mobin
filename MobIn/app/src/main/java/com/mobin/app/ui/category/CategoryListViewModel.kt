@@ -1,4 +1,4 @@
-﻿package com.mobin.app.ui.category
+package com.mobin.app.ui.category
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -64,7 +64,7 @@ class CategoryListViewModel : ViewModel() {
                             "available now" -> p.availableBeds > 0
                             else -> pCat.contains(cat)
                         }
-                    }.ifEmpty { all }
+                    }
 
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,

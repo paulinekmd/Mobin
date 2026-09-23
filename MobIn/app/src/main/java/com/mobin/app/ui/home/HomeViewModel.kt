@@ -89,7 +89,7 @@ class HomeViewModel : ViewModel() {
 
     private fun filterByCategory(all: List<Property>, category: String): List<Property> {
         val cat = category.lowercase().trim()
-        val matched = all.filter { p ->
+        return all.filter { p ->
             val pCat = p.category.lowercase().trim()
             when (cat) {
                 "boarding house", "boarding houses" -> pCat.contains("boarding")
@@ -98,7 +98,6 @@ class HomeViewModel : ViewModel() {
                 else -> pCat.contains(cat)
             }
         }
-        return matched.ifEmpty { all }
     }
 
     fun toggleFavorite(propertyId: String) {

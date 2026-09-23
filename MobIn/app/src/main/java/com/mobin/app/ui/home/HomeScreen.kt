@@ -230,17 +230,43 @@ internal fun HomeContent(
 
             Spacer(Modifier.height(12.dp))
 
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 22.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                items(uiState.categoryProperties, key = { it.id }) { property ->
-                    PropertyCard(
-                        property = property,
-                        onClick = { onPropertyClick(property) },
-                        onToggleFavorite = { onToggleFavorite(property.id) },
-                    )
+            if (uiState.categoryProperties.isEmpty()) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 22.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFF9F9F9),
+                    border = BorderStroke(1.dp, Color(0xFFECECEC)),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 24.dp, horizontal = 16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "No ${uiState.categorySectionTitle.lowercase()} listed yet",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = Color(0xFF888888),
+                                fontSize = 13.5.sp,
+                            ),
+                        )
+                    }
+                }
+            } else {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 22.dp),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    items(uiState.categoryProperties, key = { it.id }) { property ->
+                        PropertyCard(
+                            property = property,
+                            onClick = { onPropertyClick(property) },
+                            onToggleFavorite = { onToggleFavorite(property.id) },
+                        )
+                    }
                 }
             }
 

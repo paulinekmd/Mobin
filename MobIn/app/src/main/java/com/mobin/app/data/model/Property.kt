@@ -63,11 +63,10 @@ data class PropertyDto(
             address?.ifBlank { null } ?: "Urgello, Cebu City"
         }
 
-        val type = propertyType ?: ""
+        val type = propertyType?.trim() ?: ""
         val categoryFormatted = when {
-            type.contains("dorm", ignoreCase = true) -> "Dormitories"
-            type.contains("apart", ignoreCase = true) -> "Apartments"
-            type.contains("studio", ignoreCase = true) -> "Apartments"
+            type.contains("dorm", ignoreCase = true) || type.contains("bedspace", ignoreCase = true) -> "Dormitories"
+            type.contains("apart", ignoreCase = true) || type.contains("studio", ignoreCase = true) || type.contains("condo", ignoreCase = true) -> "Apartments"
             else -> "Boarding House"
         }
 
