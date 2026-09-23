@@ -1,4 +1,4 @@
-﻿package com.mobin.app.ui.splash
+package com.mobin.app.ui.splash
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -30,22 +30,34 @@ fun SplashScreen(
     onNavigateToMain: () -> Unit,
 ) {
     LaunchedEffect(Unit) {
+        Log.d(TAG, "SplashScreen LaunchedEffect started")
         delay(800)
         val shouldGoToMain = try {
-            if (BuildConfig.SUPABASE_URL.contains("YOUR_PROJECT_ID") || BuildConfig.SUPABASE_ANON_KEY.contains("YOUR_ANON_KEY")) {
-                false
-            } else {
-                SupabaseClient.client.auth.currentSessionOrNull() != null
-            }
+            kotlinx.coroutines.withTimeoutOrNull(1500) {
+                if (BuildConfig.SUPABASE_URL.contains("YOUR_PROJECT_ID") || BuildConfig.SUPABASE_ANON_KEY.contains("YOUR_ANON_KEY") || BuildConfig.SUPABASE_URL.isBlank()) {
+                    false
+                } else {
+                    SupabaseClient.client.auth.currentSessionOrNull() != null
+                }
+            } ?: false
         } catch (e: Exception) {
             Log.e(TAG, "Session check failed: ", e)
             false
         }
 
+        Log.d(TAG, "shouldGoToMain = $shouldGoToMain")
         if (shouldGoToMain) {
             onNavigateToMain()
         } else {
-            val done = try { DataStoreManager.isOnboardingComplete().first() } catch (e: Exception) { false }
+            val done = try {
+                kotlinx.coroutines.withTimeoutOrNull(1000) {
+                    DataStoreManager.isOnboardingComplete().first()
+                } ?: false
+            } catch (e: Exception) {
+                Log.e(TAG, "Onboarding check failed: ", e)
+                false
+            }
+            Log.d(TAG, "onboarding done = $done")
             if (done) onNavigateToLogin() else onNavigateToOnboarding()
         }
     }
