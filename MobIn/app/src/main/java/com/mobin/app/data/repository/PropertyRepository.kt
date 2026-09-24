@@ -20,7 +20,7 @@ class PropertyRepository {
             location = "Urgello, Cebu City",
             price = 3500.0,
             availableBeds = 3,
-            rating = 4.5,
+            rating = 0.0,
             imageUrl = null,
             isVerified = true,
             overview = "Casa Urgello offers a cozy and budget-friendly living space for students and professionals. Conveniently situated in Urgello, Cebu City, near major universities.",
@@ -35,7 +35,7 @@ class PropertyRepository {
             location = "Urgello, Cebu City",
             price = 3500.0,
             availableBeds = 3,
-            rating = 4.5,
+            rating = 0.0,
             imageUrl = null,
             isVerified = true,
             overview = "Quiet and clean rooms with modern amenities. Perfect for students seeking a productive study environment.",
@@ -50,7 +50,7 @@ class PropertyRepository {
             location = "Sambag 1, Cebu City",
             price = 3500.0,
             availableBeds = 3,
-            rating = 4.5,
+            rating = 0.0,
             imageUrl = null,
             isVerified = true,
             overview = "A modern apartment unit with ample ventilation, secure gates, and nearby grocery stores.",
@@ -65,7 +65,7 @@ class PropertyRepository {
             location = "Urgello, Cebu City",
             price = 3500.0,
             availableBeds = 3,
-            rating = 4.5,
+            rating = 0.0,
             imageUrl = null,
             isVerified = true,
             overview = "State-of-the-art dormitory with dedicated study lounges, high-speed fiber internet, and 24/7 security.",
@@ -80,7 +80,7 @@ class PropertyRepository {
             location = "Sambag 1, Cebu City",
             price = 3500.0,
             availableBeds = 3,
-            rating = 4.5,
+            rating = 0.0,
             imageUrl = null,
             isVerified = true,
             overview = "Affordable city living close to transport terminals and food hubs.",
@@ -131,6 +131,24 @@ class PropertyRepository {
                     emptyList()
                 }
 
+                val reviewsList = try {
+                    supabase.from("landlord_reviews")
+                        .select()
+                        .decodeList<com.mobin.app.data.model.LandlordReviewDto>()
+                } catch (e: Exception) {
+                    emptyList()
+                }
+
+                val landlordAvgRatings = reviewsList
+                    .groupBy { it.landlordName?.trim()?.lowercase() }
+                    .mapNotNull { (name, revs) ->
+                        if (name.isNullOrBlank() || revs.isEmpty()) null
+                        else {
+                            val avg = String.format(java.util.Locale.US, "%.1f", revs.sumOf { it.rating }.toDouble() / revs.size).toDoubleOrNull() ?: 0.0
+                            name to avg
+                        }
+                    }.toMap()
+
                 if (dtos.isNotEmpty()) {
                     android.util.Log.d("PropertyRepository", "Fetched ${dtos.size} properties from Supabase")
                     val properties = dtos.map { dto ->
@@ -140,9 +158,13 @@ class PropertyRepository {
                             (!dto.landlordName.isNullOrBlank() && prof.fullName?.trim()?.equals(dto.landlordName.trim(), ignoreCase = true) == true)
                         }?.avatarUrl
 
+                        val ownerKey = (dto.landlordName?.trim()?.ifBlank { null } ?: "Mary Ann Dasalo").lowercase()
+                        val computedRating = landlordAvgRatings[ownerKey] ?: 0.0
+
                         dto.toProperty(
                             isSaved = currentSaved.contains(dto.id.toString()),
                             avatarUrl = matchedAvatar,
+                            landlordRating = computedRating,
                         )
                     }
                     return@runCatching properties

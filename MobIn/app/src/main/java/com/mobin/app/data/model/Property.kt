@@ -49,7 +49,11 @@ data class PropertyDto(
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,
 ) {
-    fun toProperty(isSaved: Boolean = false, avatarUrl: String? = null): Property {
+    fun toProperty(
+        isSaved: Boolean = false,
+        avatarUrl: String? = null,
+        landlordRating: Double? = null,
+    ): Property {
         val allImages = mutableListOf<String>()
         if (!image.isNullOrBlank()) allImages.add(image)
         photos?.filter { it.isNotBlank() }?.let { allImages.addAll(it) }
@@ -78,7 +82,7 @@ data class PropertyDto(
             location = loc,
             price = rent ?: 3500.0,
             availableBeds = 3,
-            rating = 4.5,
+            rating = landlordRating ?: 0.0,
             imageUrl = distinctImages.firstOrNull() ?: image?.ifBlank { null },
             images = distinctImages,
             isSaved = isSaved,
