@@ -5,10 +5,14 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "mobin_prefs")
 
@@ -18,6 +22,7 @@ object DataStoreManager {
 
     private val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
     private val SAVED_PROPERTY_IDS = stringSetPreferencesKey("saved_property_ids")
+    private val RECENT_SEARCHES = stringPreferencesKey("recent_searches_json")
 
     fun init(context: Context) {
         dataStore = context.dataStore
@@ -40,6 +45,32 @@ object DataStoreManager {
         if (::dataStore.isInitialized) {
             dataStore.data.map { prefs -> prefs[SAVED_PROPERTY_IDS] ?: emptySet() }
         } else {
-            kotlinx.coroutines.flow.flowOf(emptySet())
+            flowOf(emptySet())
+        }
+
+    suspend fun saveRecentSearches(searches: List<String>) {
+        if (::dataStore.isInitialized) {
+            dataStore.edit { prefs ->
+                prefs[RECENT_SEARCHES] = Json.encodeToString(searches)
+            }
+        }
+    }
+
+    fun getRecentSearches(): Flow<List<String>> =
+        if (::dataStore.isInitialized) {
+            dataStore.data.map { prefs ->
+                val jsonStr = prefs[RECENT_SEARCHES]
+                if (jsonStr.isNullOrBlank()) {
+                    emptyList()
+                } else {
+                    try {
+                        Json.decodeFromString<List<String>>(jsonStr)
+                    } catch (e: Exception) {
+                        emptyList()
+                    }
+                }
+            }
+        } else {
+            flowOf(emptyList())
         }
 }

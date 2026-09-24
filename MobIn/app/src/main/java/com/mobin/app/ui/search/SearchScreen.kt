@@ -59,6 +59,7 @@ fun SearchScreen(
         onQueryChange = { viewModel.onQueryChange(it) },
         onCategorySelect = { viewModel.selectCategory(it) },
         onSuggestionClick = { viewModel.onSelectSearchSuggestion(it) },
+        onSearchSubmitted = { viewModel.onSubmitSearch(it) },
         onRemoveRecent = { viewModel.removeRecentSearch(it) },
         onClearAllRecent = { viewModel.clearAllRecentSearches() },
         onToggleFavorite = { viewModel.toggleFavorite(it) },
@@ -74,6 +75,7 @@ internal fun SearchContent(
     onQueryChange: (String) -> Unit,
     onCategorySelect: (String) -> Unit,
     onSuggestionClick: (String) -> Unit,
+    onSearchSubmitted: (String) -> Unit,
     onRemoveRecent: (String) -> Unit,
     onClearAllRecent: () -> Unit,
     onToggleFavorite: (String) -> Unit,
@@ -160,7 +162,12 @@ internal fun SearchContent(
                 singleLine = true,
                 shape = RoundedCornerShape(14.dp),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        focusManager.clearFocus()
+                        onSearchSubmitted(uiState.query)
+                    }
+                ),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFF8C4E03),
                     unfocusedBorderColor = Color(0xFF8C4E03),
@@ -392,7 +399,12 @@ internal fun SearchContent(
                     items(uiState.filteredResults, key = { it.id }) { property ->
                         SearchResultItemCard(
                             property = property,
-                            onClick = { onPropertyClick(property) },
+                            onClick = {
+                                if (uiState.query.isNotBlank()) {
+                                    onSearchSubmitted(uiState.query)
+                                }
+                                onPropertyClick(property)
+                            },
                             onToggleFavorite = { onToggleFavorite(property.id) },
                         )
                     }
@@ -566,6 +578,7 @@ private fun SearchScreenPreview() {
             onQueryChange = {},
             onCategorySelect = {},
             onSuggestionClick = {},
+            onSearchSubmitted = {},
             onRemoveRecent = {},
             onClearAllRecent = {},
             onToggleFavorite = {},

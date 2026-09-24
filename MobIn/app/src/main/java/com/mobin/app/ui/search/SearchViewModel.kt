@@ -1,21 +1,19 @@
-﻿package com.mobin.app.ui.search
+package com.mobin.app.ui.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mobin.app.data.model.Property
 import com.mobin.app.data.repository.PropertyRepository
+import com.mobin.app.util.DataStoreManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 data class SearchUiState(
     val query: String = "",
     val selectedCategory: String = "All",
-    val recentSearches: List<String> = listOf(
-        "Boarding houses in Urgello",
-        "Rooms near SWU",
-        "Boarding house near SWU",
-    ),
+    val recentSearches: List<String> = emptyList(),
     val popularSearches: List<String> = listOf(
         "Under ₱5,000",
         "Dormitory",
@@ -36,6 +34,15 @@ class SearchViewModel : ViewModel() {
 
     init {
         loadProperties()
+        observeRecentSearches()
+    }
+
+    private fun observeRecentSearches() {
+        viewModelScope.launch {
+            DataStoreManager.getRecentSearches().collectLatest { list ->
+                _uiState.value = _uiState.value.copy(recentSearches = list)
+            }
+        }
     }
 
     private fun loadProperties() {
@@ -62,16 +69,40 @@ class SearchViewModel : ViewModel() {
     fun onSelectSearchSuggestion(suggestion: String) {
         _uiState.value = _uiState.value.copy(query = suggestion)
         filterResults(suggestion, _uiState.value.selectedCategory)
+        addRecentSearch(suggestion)
+    }
+
+    fun onSubmitSearch(query: String) {
+        if (query.isNotBlank()) {
+            addRecentSearch(query)
+        }
+    }
+
+    fun addRecentSearch(term: String) {
+        val clean = term.trim()
+        if (clean.isBlank()) return
+
+        val current = _uiState.value.recentSearches.filterNot { it.equals(clean, ignoreCase = true) }
+        val updated = listOf(clean) + current.take(9) // Keep at most 10 recent searches
+        _uiState.value = _uiState.value.copy(recentSearches = updated)
+        viewModelScope.launch {
+            DataStoreManager.saveRecentSearches(updated)
+        }
     }
 
     fun removeRecentSearch(term: String) {
-        _uiState.value = _uiState.value.copy(
-            recentSearches = _uiState.value.recentSearches.filterNot { it.equals(term, ignoreCase = true) }
-        )
+        val updated = _uiState.value.recentSearches.filterNot { it.equals(term, ignoreCase = true) }
+        _uiState.value = _uiState.value.copy(recentSearches = updated)
+        viewModelScope.launch {
+            DataStoreManager.saveRecentSearches(updated)
+        }
     }
 
     fun clearAllRecentSearches() {
         _uiState.value = _uiState.value.copy(recentSearches = emptyList())
+        viewModelScope.launch {
+            DataStoreManager.saveRecentSearches(emptyList())
+        }
     }
 
     private fun filterResults(query: String, category: String) {
