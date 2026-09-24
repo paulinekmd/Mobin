@@ -93,6 +93,7 @@ class PropertyRepository {
     companion object {
         private val _savedPropertyIds = kotlinx.coroutines.flow.MutableStateFlow<Set<String>>(emptySet())
         val savedPropertyIdsFlow: kotlinx.coroutines.flow.StateFlow<Set<String>> = _savedPropertyIds
+        private var _cachedProperties: List<Property> = emptyList()
         private var isLoadedFromDataStore = false
     }
 
@@ -167,6 +168,7 @@ class PropertyRepository {
                             landlordRating = computedRating,
                         )
                     }
+                    _cachedProperties = properties
                     return@runCatching properties
                 }
             } catch (e: Exception) {
@@ -174,19 +176,27 @@ class PropertyRepository {
             }
 
             // Fallback to defaults if empty or error
-            defaultProperties.map {
+            val fallback = defaultProperties.map {
                 it.copy(isSaved = currentSaved.contains(it.id))
             }
+            if (_cachedProperties.isEmpty()) {
+                _cachedProperties = fallback
+            }
+            fallback
         }
     }
 
+    fun getCachedProperties(): List<Property> {
+        return _cachedProperties.ifEmpty { defaultProperties }
+    }
+
     suspend fun getPropertyById(id: String): Property? = withContext(Dispatchers.IO) {
-        getProperties().getOrNull()?.find { it.id == id }
+        _cachedProperties.find { it.id == id } ?: getProperties().getOrNull()?.find { it.id == id }
     }
 
     suspend fun getSavedProperties(): Result<List<Property>> = withContext(Dispatchers.IO) {
         runCatching {
-            val all = getProperties().getOrNull() ?: emptyList()
+            val all = if (_cachedProperties.isNotEmpty()) _cachedProperties else (getProperties().getOrNull() ?: emptyList())
             val currentSaved = _savedPropertyIds.value
             all.filter { currentSaved.contains(it.id) }
         }

@@ -30,13 +30,18 @@ class ChatViewModel : ViewModel() {
         if (initialMessage.isNotBlank() && _uiState.value.inputText.isBlank()) {
             _uiState.value = _uiState.value.copy(inputText = initialMessage)
         }
+
+        // Instant local cache load (0ms latency)
+        val cachedConv = ChatRepository.conversationsFlow.value.find { it.id == chatId }
+        val cachedMessages = ChatRepository.messagesFlow.value[chatId] ?: emptyList()
+        _uiState.value = _uiState.value.copy(
+            conversation = cachedConv,
+            messages = cachedMessages,
+            isLoading = cachedMessages.isEmpty() && cachedConv == null,
+        )
+
+        // Observe real-time messages immediately
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            val conv = chatRepository.getConversation(chatId)
-            _uiState.value = _uiState.value.copy(conversation = conv)
-            chatRepository.refreshRemoteMessages()
-
             ChatRepository.messagesFlow.collectLatest { map ->
                 val messages = map[chatId] ?: emptyList()
                 _uiState.value = _uiState.value.copy(
@@ -44,6 +49,17 @@ class ChatViewModel : ViewModel() {
                     messages = messages,
                 )
             }
+        }
+
+        // Background remote sync
+        viewModelScope.launch {
+            if (cachedConv == null) {
+                val conv = chatRepository.getConversation(chatId)
+                if (conv != null) {
+                    _uiState.value = _uiState.value.copy(conversation = conv)
+                }
+            }
+            chatRepository.refreshRemoteMessages()
         }
     }
 

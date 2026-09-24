@@ -21,7 +21,12 @@ class MessagesViewModel : ViewModel() {
 
     private val chatRepository = ChatRepository()
 
-    private val _uiState = MutableStateFlow(MessagesUiState())
+    private val _uiState = MutableStateFlow(
+        MessagesUiState(
+            allConversations = ChatRepository.conversationsFlow.value,
+            filteredConversations = ChatRepository.conversationsFlow.value,
+        )
+    )
     val uiState: StateFlow<MessagesUiState> = _uiState
 
     init {
@@ -31,7 +36,9 @@ class MessagesViewModel : ViewModel() {
 
     fun refresh() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            if (_uiState.value.allConversations.isEmpty()) {
+                _uiState.value = _uiState.value.copy(isLoading = true)
+            }
             chatRepository.refreshRemoteMessages()
             _uiState.value = _uiState.value.copy(isLoading = false)
         }

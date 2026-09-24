@@ -59,7 +59,7 @@ class ChatRepository {
                 } catch (e: Exception) {
                     android.util.Log.d("ChatRepository", "Poller note: ${e.message}")
                 }
-                delay(3000) // Poll every 3 seconds for live message updates
+                delay(1500) // Fast 1.5s polling for true real-time chat updates
             }
         }
     }
@@ -73,6 +73,7 @@ class ChatRepository {
 
             if (dtos.isEmpty()) return@withContext
 
+            val propertiesMap = propertyRepository.getCachedProperties().associateBy { it.id }
             val conversationMap = mutableMapOf<String, MutableList<ChatMessage>>()
             val conversationHeaders = mutableMapOf<String, ChatConversation>()
 
@@ -111,7 +112,7 @@ class ChatRepository {
                 val list = conversationMap.getOrPut(chatId) { mutableListOf() }
                 list.add(msg)
 
-                val prop = propertyRepository.getPropertyById(chatId)
+                val prop = propertiesMap[chatId]
                 val propTitle = dto.propertyName?.ifBlank { null } ?: prop?.title ?: "Accommodation"
                 val contactName = if (!isFromUser && !dto.senderName.isNullOrBlank()) {
                     dto.senderName
@@ -145,7 +146,9 @@ class ChatRepository {
 
     suspend fun getConversations(): Result<List<ChatConversation>> = withContext(Dispatchers.IO) {
         runCatching {
-            refreshRemoteMessages()
+            if (_conversationsFlow.value.isEmpty()) {
+                refreshRemoteMessages()
+            }
             _conversationsFlow.value
         }
     }
@@ -232,6 +235,7 @@ class ChatRepository {
             )
             supabase.from("messages").insert(insert)
             android.util.Log.d("ChatRepository", "Inserted live message to Supabase for property $chatId")
+            refreshRemoteMessages()
         } catch (e: Exception) {
             android.util.Log.e("ChatRepository", "Remote message insert note: ${e.message}", e)
         }
