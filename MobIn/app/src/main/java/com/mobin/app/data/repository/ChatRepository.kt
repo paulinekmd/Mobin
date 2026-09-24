@@ -32,11 +32,26 @@ class ChatRepository {
         private val _messagesFlow = MutableStateFlow<Map<String, List<ChatMessage>>>(emptyMap())
         val messagesFlow: StateFlow<Map<String, List<ChatMessage>>> = _messagesFlow
 
+        private val _readMessageIds = mutableMapOf<String, String>()
         private var isPollerStarted = false
     }
 
     init {
         startLivePoller()
+    }
+
+    fun markAsRead(chatId: String) {
+        val lastMsg = _messagesFlow.value[chatId]?.lastOrNull()
+        if (lastMsg != null) {
+            _readMessageIds[chatId] = lastMsg.id
+        }
+        val currentConversations = _conversationsFlow.value
+        val index = currentConversations.indexOfFirst { it.id == chatId }
+        if (index >= 0 && currentConversations[index].unreadCount > 0) {
+            val updated = currentConversations.toMutableList()
+            updated[index] = updated[index].copy(unreadCount = 0)
+            _conversationsFlow.value = updated
+        }
     }
 
     private fun getCurrentUserEmail(): String {
@@ -73,16 +88,17 @@ class ChatRepository {
 
             if (dtos.isEmpty()) return@withContext
 
+            val sortedDtos = dtos.sortedBy { it.createdAt ?: "" }
             val propertiesMap = propertyRepository.getCachedProperties().associateBy { it.id }
             val conversationMap = mutableMapOf<String, MutableList<ChatMessage>>()
-            val conversationHeaders = mutableMapOf<String, ChatConversation>()
+            val latestDtoMap = mutableMapOf<String, SupabaseMessageDto>()
 
             val timeFormatter = SimpleDateFormat("h:mm a", Locale.US)
             val isoParser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).apply {
                 timeZone = TimeZone.getTimeZone("UTC")
             }
 
-            for (dto in dtos) {
+            for (dto in sortedDtos) {
                 val msgText = dto.message?.trim() ?: continue
                 if (msgText.isBlank()) continue
 
@@ -111,34 +127,47 @@ class ChatRepository {
 
                 val list = conversationMap.getOrPut(chatId) { mutableListOf() }
                 list.add(msg)
+                latestDtoMap[chatId] = dto
+            }
 
+            val conversationHeaders = mutableListOf<ChatConversation>()
+            for ((chatId, msgs) in conversationMap) {
+                val latestMsg = msgs.lastOrNull() ?: continue
+                val latestDto = latestDtoMap[chatId]
                 val prop = propertiesMap[chatId]
-                val propTitle = dto.propertyName?.ifBlank { null } ?: prop?.title ?: "Accommodation"
-                val contactName = if (!isFromUser && !dto.senderName.isNullOrBlank()) {
-                    dto.senderName
+                val propTitle = latestDto?.propertyName?.ifBlank { null } ?: prop?.title ?: "Accommodation"
+                val contactName = if (!latestMsg.isFromCurrentUser && !latestDto?.senderName.isNullOrBlank()) {
+                    latestDto!!.senderName!!
                 } else {
                     prop?.ownerName ?: "Landlord"
                 }
 
-                conversationHeaders[chatId] = ChatConversation(
-                    id = chatId,
-                    propertyId = dto.propertyId ?: chatId,
-                    contactName = contactName,
-                    contactEmail = dto.landlordEmail ?: "",
-                    propertyName = propTitle,
-                    lastMessage = if (msgText.trim().let {
-                        it.contains("res.cloudinary.com") ||
-                        it.lowercase().let { l -> l.endsWith(".jpg") || l.endsWith(".jpeg") || l.endsWith(".png") || l.endsWith(".gif") || l.endsWith(".webp") }
-                    }) "📷 Image" else msgText,
-                    lastTimestamp = formattedTime,
-                    avatarUrl = prop?.imageUrl,
-                    isOnline = true,
-                    unreadCount = if (!isFromUser) 1 else 0,
+                val lastReadId = _readMessageIds[chatId]
+                val isUnread = !latestMsg.isFromCurrentUser && (lastReadId == null || lastReadId != latestMsg.id)
+
+                val displayLastMessage = if (latestMsg.text.trim().let {
+                    it.contains("res.cloudinary.com") ||
+                    it.lowercase().let { l -> l.endsWith(".jpg") || l.endsWith(".jpeg") || l.endsWith(".png") || l.endsWith(".gif") || l.endsWith(".webp") }
+                }) "📷 Image" else latestMsg.text
+
+                conversationHeaders.add(
+                    ChatConversation(
+                        id = chatId,
+                        propertyId = latestDto?.propertyId ?: chatId,
+                        contactName = contactName,
+                        contactEmail = latestDto?.landlordEmail ?: "",
+                        propertyName = propTitle,
+                        lastMessage = displayLastMessage,
+                        lastTimestamp = latestMsg.timestamp,
+                        avatarUrl = prop?.imageUrl,
+                        isOnline = true,
+                        unreadCount = if (isUnread) 1 else 0,
+                    )
                 )
             }
 
             _messagesFlow.value = conversationMap.mapValues { it.value.toList() }
-            _conversationsFlow.value = conversationHeaders.values.reversed()
+            _conversationsFlow.value = conversationHeaders.reversed()
         } catch (e: Exception) {
             android.util.Log.e("ChatRepository", "Failed to refresh remote messages: ${e.message}", e)
         }

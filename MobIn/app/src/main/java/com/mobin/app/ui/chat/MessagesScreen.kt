@@ -125,15 +125,27 @@ internal fun MessagesContent(
                         color = if (isSelected) Color(0xFFD9D9D9) else White,
                         border = BorderStroke(1.dp, if (isSelected) Color(0xFFD9D9D9) else Color(0xFFE0E0E0)),
                     ) {
-                        Text(
-                            text = tab,
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 12.5.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) Color(0xFF1E1E1E) else Color(0xFF555555),
-                            ),
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                             modifier = Modifier.padding(horizontal = 18.dp, vertical = 7.dp),
-                        )
+                        ) {
+                            Text(
+                                text = tab,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 12.5.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) Color(0xFF1E1E1E) else Color(0xFF555555),
+                                ),
+                            )
+                            if (tab == "Unread" && uiState.allConversations.any { it.unreadCount > 0 }) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(7.dp)
+                                        .background(GoldenMarigold, CircleShape)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -157,7 +169,13 @@ internal fun MessagesContent(
                         )
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            text = "No messages found",
+                            text = if (uiState.selectedTab.equals("Unread", ignoreCase = true)) {
+                                "No unread messages"
+                            } else if (uiState.query.isNotBlank()) {
+                                "No messages matching \"${uiState.query}\""
+                            } else {
+                                "No messages found"
+                            },
                             fontSize = 14.sp,
                             color = Color(0xFF7A7A7A),
                         )
@@ -187,6 +205,8 @@ private fun ConversationRowItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isUnread = conversation.unreadCount > 0
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -227,7 +247,7 @@ private fun ConversationRowItem(
             Text(
                 text = conversation.displayHeader,
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = if (isUnread) FontWeight.Bold else FontWeight.SemiBold,
                     fontSize = 14.sp,
                     color = Color(0xFF1E1E1E),
                 ),
@@ -239,7 +259,8 @@ private fun ConversationRowItem(
                 text = conversation.lastMessage,
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontSize = 12.sp,
-                    color = Color(0xFF7A7A7A),
+                    fontWeight = if (isUnread) FontWeight.SemiBold else FontWeight.Normal,
+                    color = if (isUnread) Color(0xFF1E1E1E) else Color(0xFF7A7A7A),
                 ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -248,14 +269,28 @@ private fun ConversationRowItem(
 
         Spacer(Modifier.width(10.dp))
 
-        // Timestamp on right
-        Text(
-            text = conversation.lastTimestamp,
-            style = MaterialTheme.typography.bodySmall.copy(
-                fontSize = 11.sp,
-                color = Color(0xFF9E9E9E),
-            ),
-        )
+        // Timestamp & Yellow Unread Dot on right
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                text = conversation.lastTimestamp,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 11.sp,
+                    fontWeight = if (isUnread) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isUnread) GoldenMarigold else Color(0xFF9E9E9E),
+                ),
+            )
+            if (isUnread) {
+                Spacer(Modifier.height(5.dp))
+                Box(
+                    modifier = Modifier
+                        .size(9.dp)
+                        .background(GoldenMarigold, CircleShape)
+                )
+            }
+        }
     }
 }
 

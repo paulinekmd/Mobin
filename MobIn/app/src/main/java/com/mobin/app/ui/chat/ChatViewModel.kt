@@ -31,6 +31,8 @@ class ChatViewModel : ViewModel() {
             _uiState.value = _uiState.value.copy(inputText = initialMessage)
         }
 
+        chatRepository.markAsRead(chatId)
+
         // Instant local cache load (0ms latency)
         val cachedConv = ChatRepository.conversationsFlow.value.find { it.id == chatId }
         val cachedMessages = ChatRepository.messagesFlow.value[chatId] ?: emptyList()
@@ -44,6 +46,7 @@ class ChatViewModel : ViewModel() {
         viewModelScope.launch {
             ChatRepository.messagesFlow.collectLatest { map ->
                 val messages = map[chatId] ?: emptyList()
+                chatRepository.markAsRead(chatId)
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     messages = messages,
