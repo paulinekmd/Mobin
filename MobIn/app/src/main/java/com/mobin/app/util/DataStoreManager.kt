@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
@@ -23,6 +24,7 @@ object DataStoreManager {
     private val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
     private val SAVED_PROPERTY_IDS = stringSetPreferencesKey("saved_property_ids")
     private val RECENT_SEARCHES = stringPreferencesKey("recent_searches_json")
+    private val READ_MESSAGE_IDS = stringPreferencesKey("read_message_ids_json")
 
     fun init(context: Context) {
         dataStore = context.dataStore
@@ -73,4 +75,42 @@ object DataStoreManager {
         } else {
             flowOf(emptyList())
         }
+
+    suspend fun getReadMessageMapSnapshot(): Map<String, String> {
+        return if (::dataStore.isInitialized) {
+            try {
+                val prefs = dataStore.data.first()
+                val jsonStr = prefs[READ_MESSAGE_IDS]
+                if (jsonStr.isNullOrBlank()) emptyMap() else Json.decodeFromString(jsonStr)
+            } catch (e: Exception) {
+                emptyMap()
+            }
+        } else emptyMap()
+    }
+
+    fun getReadMessageMap(): Flow<Map<String, String>> =
+        if (::dataStore.isInitialized) {
+            dataStore.data.map { prefs ->
+                val jsonStr = prefs[READ_MESSAGE_IDS]
+                if (jsonStr.isNullOrBlank()) {
+                    emptyMap()
+                } else {
+                    try {
+                        Json.decodeFromString<Map<String, String>>(jsonStr)
+                    } catch (e: Exception) {
+                        emptyMap()
+                    }
+                }
+            }
+        } else {
+            flowOf(emptyMap())
+        }
+
+    suspend fun saveReadMessageMap(map: Map<String, String>) {
+        if (::dataStore.isInitialized) {
+            dataStore.edit { prefs ->
+                prefs[READ_MESSAGE_IDS] = Json.encodeToString(map)
+            }
+        }
+    }
 }

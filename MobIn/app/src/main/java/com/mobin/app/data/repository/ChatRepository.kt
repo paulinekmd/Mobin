@@ -5,6 +5,7 @@ import com.mobin.app.data.model.ChatMessage
 import com.mobin.app.data.model.SupabaseMessageDto
 import com.mobin.app.data.model.SupabaseMessageInsert
 import com.mobin.app.data.remote.SupabaseClient
+import com.mobin.app.util.DataStoreManager
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.CoroutineScope
@@ -12,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,16 +36,37 @@ class ChatRepository {
 
         private val _readMessageIds = mutableMapOf<String, String>()
         private var isPollerStarted = false
+        private var isObserverStarted = false
     }
 
     init {
+        startReadStatusObserver()
         startLivePoller()
+    }
+
+    private fun startReadStatusObserver() {
+        if (isObserverStarted) return
+        isObserverStarted = true
+
+        CoroutineScope(Dispatchers.IO).launch {
+            DataStoreManager.getReadMessageMap().collectLatest { map ->
+                synchronized(_readMessageIds) {
+                    _readMessageIds.putAll(map)
+                }
+            }
+        }
     }
 
     fun markAsRead(chatId: String) {
         val lastMsg = _messagesFlow.value[chatId]?.lastOrNull()
         if (lastMsg != null) {
-            _readMessageIds[chatId] = lastMsg.id
+            val mapToSave = synchronized(_readMessageIds) {
+                _readMessageIds[chatId] = lastMsg.id
+                _readMessageIds.toMap()
+            }
+            CoroutineScope(Dispatchers.IO).launch {
+                DataStoreManager.saveReadMessageMap(mapToSave)
+            }
         }
         val currentConversations = _conversationsFlow.value
         val index = currentConversations.indexOfFirst { it.id == chatId }
@@ -130,6 +153,20 @@ class ChatRepository {
                 latestDtoMap[chatId] = dto
             }
 
+            val currentReadMap = synchronized(_readMessageIds) {
+                if (_readMessageIds.isEmpty()) {
+                    null
+                } else {
+                    _readMessageIds.toMap()
+                }
+            } ?: run {
+                val snapshot = DataStoreManager.getReadMessageMapSnapshot()
+                synchronized(_readMessageIds) {
+                    _readMessageIds.putAll(snapshot)
+                    _readMessageIds.toMap()
+                }
+            }
+
             val conversationHeaders = mutableListOf<ChatConversation>()
             for ((chatId, msgs) in conversationMap) {
                 val latestMsg = msgs.lastOrNull() ?: continue
@@ -142,7 +179,7 @@ class ChatRepository {
                     prop?.ownerName ?: "Landlord"
                 }
 
-                val lastReadId = _readMessageIds[chatId]
+                val lastReadId = currentReadMap[chatId]
                 val isUnread = !latestMsg.isFromCurrentUser && (lastReadId == null || lastReadId != latestMsg.id)
 
                 val displayLastMessage = if (latestMsg.text.trim().let {
