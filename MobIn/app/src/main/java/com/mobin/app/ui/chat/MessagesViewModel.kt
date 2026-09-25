@@ -81,4 +81,10 @@ class MessagesViewModel : ViewModel() {
 
         _uiState.value = _uiState.value.copy(filteredConversations = list)
     }
+
+    fun deleteConversation(chatId: String) {
+        viewModelScope.launch {
+            chatRepository.deleteChatLocally(chatId)
+        }
+    }
 }

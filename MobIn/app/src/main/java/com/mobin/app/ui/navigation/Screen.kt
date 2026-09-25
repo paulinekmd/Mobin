@@ -33,14 +33,12 @@ sealed class Screen(val route: String) {
     object LandlordProfile : Screen("landlord_profile/{propertyId}") {
         fun createRoute(propertyId: String): String = "landlord_profile/$propertyId"
     }
-    object Chat            : Screen("chat/{chatId}?initialMessage={initialMessage}") {
-        fun createRoute(chatId: String, initialMessage: String? = null): String {
-            return if (!initialMessage.isNullOrBlank()) {
-                val encodedMsg = URLEncoder.encode(initialMessage.trim(), StandardCharsets.UTF_8.toString())
-                "chat/$chatId?initialMessage=$encodedMsg"
-            } else {
-                "chat/$chatId?initialMessage="
-            }
+    object Chat            : Screen("chat/{chatId}?showSuggestions={showSuggestions}&initialMessage={initialMessage}") {
+        fun createRoute(chatId: String, showSuggestions: Boolean = false, initialMessage: String? = null): String {
+            val encodedMsg = if (!initialMessage.isNullOrBlank()) {
+                URLEncoder.encode(initialMessage.trim(), StandardCharsets.UTF_8.toString())
+            } else ""
+            return "chat/$chatId?showSuggestions=$showSuggestions&initialMessage=$encodedMsg"
         }
     }
     object Main            : Screen("main")

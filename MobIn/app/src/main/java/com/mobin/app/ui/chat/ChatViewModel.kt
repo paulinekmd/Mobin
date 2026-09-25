@@ -79,4 +79,13 @@ class ChatViewModel : ViewModel() {
             chatRepository.sendMessage(currentChatId, text)
         }
     }
+
+    fun sendDirectMessage(text: String) {
+        val cleanText = text.trim()
+        if (cleanText.isBlank()) return
+
+        viewModelScope.launch {
+            chatRepository.sendMessage(currentChatId, cleanText)
+        }
+    }
 }

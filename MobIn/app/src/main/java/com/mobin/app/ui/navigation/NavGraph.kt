@@ -176,7 +176,7 @@ fun MobInNavGraph() {
                 propertyId = propertyId,
                 onBack = { navController.popBackStack() },
                 onMessageOwner = {
-                    navController.navigate(Screen.Chat.createRoute(propertyId, "Hi! I’m interested in this accommodation. Is it still available?"))
+                    navController.navigate(Screen.Chat.createRoute(propertyId, showSuggestions = true))
                 },
                 onLandlordClick = {
                     navController.navigate(Screen.LandlordProfile.createRoute(propertyId))
@@ -199,6 +199,10 @@ fun MobInNavGraph() {
             route = Screen.Chat.route,
             arguments = listOf(
                 navArgument("chatId") { type = NavType.StringType },
+                navArgument("showSuggestions") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
                 navArgument("initialMessage") {
                     type = NavType.StringType
                     nullable = true
@@ -207,6 +211,7 @@ fun MobInNavGraph() {
             ),
         ) { backStackEntry ->
             val chatId = backStackEntry.arguments?.getString("chatId") ?: "1"
+            val showSuggestions = backStackEntry.arguments?.getBoolean("showSuggestions") ?: false
             val rawMsg = backStackEntry.arguments?.getString("initialMessage") ?: ""
             val initialMessage = try {
                 if (rawMsg.isNotBlank()) java.net.URLDecoder.decode(rawMsg, java.nio.charset.StandardCharsets.UTF_8.toString()) else ""
@@ -214,6 +219,7 @@ fun MobInNavGraph() {
 
             com.mobin.app.ui.chat.ChatScreen(
                 chatId = chatId,
+                showSuggestions = showSuggestions,
                 initialMessage = initialMessage,
                 onBack = { navController.popBackStack() },
             )

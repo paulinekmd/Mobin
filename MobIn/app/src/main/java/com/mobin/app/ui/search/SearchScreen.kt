@@ -390,23 +390,84 @@ internal fun SearchContent(
 
                 Spacer(Modifier.height(16.dp))
 
-                // Vertical List of Search Result Cards
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                    contentPadding = PaddingValues(bottom = 20.dp),
-                ) {
-                    items(uiState.filteredResults, key = { it.id }) { property ->
-                        SearchResultItemCard(
-                            property = property,
-                            onClick = {
-                                if (uiState.query.isNotBlank()) {
-                                    onSearchSubmitted(uiState.query)
-                                }
-                                onPropertyClick(property)
-                            },
-                            onToggleFavorite = { onToggleFavorite(property.id) },
-                        )
+                if (uiState.filteredResults.isEmpty()) {
+                    // Empty Search Results State
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(bottom = 32.dp),
+                        ) {
+                            // Magnifying Glass
+                            Box(
+                                modifier = Modifier
+                                    .size(76.dp)
+                                    .background(PeachSand.copy(alpha = 0.55f), CircleShape),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Search,
+                                    contentDescription = null,
+                                    tint = AmberSpice,
+                                    modifier = Modifier.size(38.dp),
+                                )
+                            }
+
+                            Spacer(Modifier.height(16.dp))
+
+                            Text(
+                                text = "No results found.",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontFamily = ComfortaaFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 17.sp,
+                                    color = Color(0xFF1E1E1E),
+                                ),
+                                textAlign = TextAlign.Center,
+                            )
+
+                            Spacer(Modifier.height(6.dp))
+
+                            Text(
+                                text = if (uiState.query.isNotBlank()) {
+                                    "We couldn't find any properties matching \"${uiState.query}\".\nTry checking your spelling or searching for another term."
+                                } else {
+                                    "No properties found in this category."
+                                },
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 12.5.sp,
+                                    color = Color(0xFF7A7A7A),
+                                    lineHeight = 18.sp,
+                                ),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 24.dp),
+                            )
+                        }
+                    }
+                } else {
+                    // Vertical List of Search Result Cards
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                        contentPadding = PaddingValues(bottom = 20.dp),
+                    ) {
+                        items(uiState.filteredResults, key = { it.id }) { property ->
+                            SearchResultItemCard(
+                                property = property,
+                                onClick = {
+                                    if (uiState.query.isNotBlank()) {
+                                        onSearchSubmitted(uiState.query)
+                                    }
+                                    onPropertyClick(property)
+                                },
+                                onToggleFavorite = { onToggleFavorite(property.id) },
+                            )
+                        }
                     }
                 }
             }

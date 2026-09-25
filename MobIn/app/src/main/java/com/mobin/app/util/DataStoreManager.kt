@@ -25,6 +25,7 @@ object DataStoreManager {
     private val SAVED_PROPERTY_IDS = stringSetPreferencesKey("saved_property_ids")
     private val RECENT_SEARCHES = stringPreferencesKey("recent_searches_json")
     private val READ_MESSAGE_IDS = stringPreferencesKey("read_message_ids_json")
+    private val DELETED_CHAT_IDS = stringSetPreferencesKey("deleted_chat_ids_set")
 
     fun init(context: Context) {
         dataStore = context.dataStore
@@ -112,5 +113,32 @@ object DataStoreManager {
                 prefs[READ_MESSAGE_IDS] = Json.encodeToString(map)
             }
         }
+    }
+
+    suspend fun deleteChatForUser(chatId: String) {
+        if (::dataStore.isInitialized) {
+            dataStore.edit { prefs ->
+                val current = prefs[DELETED_CHAT_IDS] ?: emptySet()
+                prefs[DELETED_CHAT_IDS] = current + chatId
+            }
+        }
+    }
+
+    fun getDeletedChatIds(): Flow<Set<String>> =
+        if (::dataStore.isInitialized) {
+            dataStore.data.map { prefs -> prefs[DELETED_CHAT_IDS] ?: emptySet() }
+        } else {
+            flowOf(emptySet())
+        }
+
+    suspend fun getDeletedChatIdsSnapshot(): Set<String> {
+        return if (::dataStore.isInitialized) {
+            try {
+                val prefs = dataStore.data.first()
+                prefs[DELETED_CHAT_IDS] ?: emptySet()
+            } catch (e: Exception) {
+                emptySet()
+            }
+        } else emptySet()
     }
 }

@@ -652,11 +652,13 @@ private fun RateLandlordBottomSheetContent(
         // Submit Review Button
         Button(
             onClick = onSubmit,
-            enabled = !isSubmitting,
+            enabled = !isSubmitting && userRating > 0,
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(
                 containerColor = GoldenMarigold,
                 contentColor = White,
+                disabledContainerColor = GoldenMarigold.copy(alpha = 0.4f),
+                disabledContentColor = White.copy(alpha = 0.7f),
             ),
             modifier = Modifier
                 .fillMaxWidth()

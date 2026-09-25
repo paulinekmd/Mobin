@@ -203,11 +203,18 @@ class ChatRepository {
                 )
             }
 
+            val deletedIds = DataStoreManager.getDeletedChatIdsSnapshot()
             _messagesFlow.value = conversationMap.mapValues { it.value.toList() }
-            _conversationsFlow.value = conversationHeaders.reversed()
+            _conversationsFlow.value = conversationHeaders.filterNot { deletedIds.contains(it.id) }.reversed()
         } catch (e: Exception) {
             android.util.Log.e("ChatRepository", "Failed to refresh remote messages: ${e.message}", e)
         }
+    }
+
+    suspend fun deleteChatLocally(chatId: String) = withContext(Dispatchers.IO) {
+        DataStoreManager.deleteChatForUser(chatId)
+        val updated = _conversationsFlow.value.filterNot { it.id == chatId }
+        _conversationsFlow.value = updated
     }
 
     suspend fun getConversations(): Result<List<ChatConversation>> = withContext(Dispatchers.IO) {

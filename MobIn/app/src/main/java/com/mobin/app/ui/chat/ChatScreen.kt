@@ -1,10 +1,15 @@
 package com.mobin.app.ui.chat
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -38,12 +43,14 @@ import com.mobin.app.ui.theme.*
 @Composable
 fun ChatScreen(
     chatId: String,
+    showSuggestions: Boolean = false,
     initialMessage: String = "",
     onBack: () -> Unit,
     viewModel: ChatViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+    var suggestionsVisible by remember(chatId, showSuggestions) { mutableStateOf(showSuggestions) }
 
     LaunchedEffect(chatId, initialMessage) {
         viewModel.loadChat(chatId, initialMessage)
@@ -145,25 +152,10 @@ fun ChatScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    // Attachment (+) button
-                    IconButton(
-                        onClick = {},
-                        modifier = Modifier.size(36.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Attach",
-                            tint = Color(0xFF1E1E1E),
-                            modifier = Modifier.size(26.dp),
-                        )
-                    }
-
-                    Spacer(Modifier.width(8.dp))
-
-                    // Input Text Field
+                    // Outlined Input Text Field
                     androidx.compose.foundation.text.BasicTextField(
                         value = uiState.inputText,
                         onValueChange = { viewModel.onInputChange(it) },
@@ -173,20 +165,24 @@ fun ChatScreen(
                         ),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                        keyboardActions = KeyboardActions(onSend = { viewModel.sendMessage() }),
+                        keyboardActions = KeyboardActions(onSend = {
+                            suggestionsVisible = false
+                            viewModel.sendMessage()
+                        }),
                         decorationBox = { innerTextField ->
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color(0xFFF3F3F3), RoundedCornerShape(24.dp))
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    .background(White, RoundedCornerShape(50))
+                                    .border(BorderStroke(1.dp, Color(0xFFDCC3B2)), RoundedCornerShape(50))
+                                    .padding(horizontal = 18.dp, vertical = 12.dp),
                                 contentAlignment = Alignment.CenterStart,
                             ) {
                                 if (uiState.inputText.isEmpty()) {
                                     Text(
-                                        text = "Type a message...",
+                                        text = "Type a message",
                                         fontSize = 13.5.sp,
-                                        color = Color(0xFF888888),
+                                        color = Color(0xFF8C929D),
                                     )
                                 }
                                 innerTextField()
@@ -197,11 +193,14 @@ fun ChatScreen(
 
                     Spacer(Modifier.width(10.dp))
 
-                    // Send Button
+                    // Brand Golden Marigold Send Button
                     IconButton(
-                        onClick = { viewModel.sendMessage() },
+                        onClick = {
+                            suggestionsVisible = false
+                            viewModel.sendMessage()
+                        },
                         modifier = Modifier
-                            .size(42.dp)
+                            .size(44.dp)
                             .background(GoldenMarigold, CircleShape),
                     ) {
                         Icon(
@@ -227,7 +226,7 @@ fun ChatScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp),
+                    .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Surface(
@@ -250,11 +249,50 @@ fun ChatScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(bottom = 12.dp),
             ) {
                 items(uiState.messages, key = { it.id }) { message ->
                     ChatMessageBubble(message = message)
+                }
+
+                // Stacked right-aligned quick reply bubbles in brand color scheme, only shown when coming from "Message Now"
+                if (suggestionsVisible) {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp, bottom = 6.dp),
+                            horizontalAlignment = Alignment.End,
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            val quickMessages = listOf(
+                                "Hi im interested in this accomodation!",
+                                "Is this accomodation still available?",
+                            )
+                            quickMessages.forEach { msg ->
+                                Surface(
+                                    shape = RoundedCornerShape(22.dp),
+                                    color = Color(0xFFFFF3D6), // Brand warm cream/peach pill background
+                                    border = BorderStroke(1.dp, GoldenMarigold.copy(alpha = 0.5f)),
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(22.dp))
+                                        .clickable {
+                                            suggestionsVisible = false
+                                            viewModel.sendDirectMessage(msg)
+                                        },
+                                ) {
+                                    Text(
+                                        text = msg,
+                                        fontSize = 13.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = ChestnutBark, // Brand deep brown/chestnut text
+                                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 11.dp),
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

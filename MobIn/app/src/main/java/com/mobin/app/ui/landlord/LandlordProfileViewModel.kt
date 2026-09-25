@@ -16,7 +16,7 @@ data class LandlordProfileUiState(
     val sortedReviews: List<LandlordReview> = emptyList(),
     val selectedSort: String = "Most Recent",
     val showRateSheet: Boolean = false,
-    val userRating: Int = 5,
+    val userRating: Int = 0,
     val reviewText: String = "",
     val isSubmitting: Boolean = false,
 )
@@ -51,7 +51,7 @@ class LandlordProfileViewModel : ViewModel() {
     }
 
     fun openRateSheet() {
-        _uiState.value = _uiState.value.copy(showRateSheet = true, userRating = 5, reviewText = "")
+        _uiState.value = _uiState.value.copy(showRateSheet = true, userRating = 0, reviewText = "")
     }
 
     fun closeRateSheet() {
@@ -84,6 +84,7 @@ class LandlordProfileViewModel : ViewModel() {
 
     fun submitReview() {
         val rating = _uiState.value.userRating
+        if (rating <= 0) return
         val text = _uiState.value.reviewText
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSubmitting = true)

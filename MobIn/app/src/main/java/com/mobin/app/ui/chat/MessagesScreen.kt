@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Person
@@ -45,6 +46,7 @@ fun MessagesScreen(
         onQueryChange = { viewModel.onQueryChange(it) },
         onTabSelect = { viewModel.selectTab(it) },
         onOpenChat = onOpenChat,
+        onDeleteConversation = { viewModel.deleteConversation(it) },
     )
 }
 
@@ -54,7 +56,10 @@ internal fun MessagesContent(
     onQueryChange: (String) -> Unit,
     onTabSelect: (String) -> Unit,
     onOpenChat: (String) -> Unit,
+    onDeleteConversation: (String) -> Unit = {},
 ) {
+    var conversationToDelete by remember { mutableStateOf<ChatConversation?>(null) }
+
     Scaffold(
         containerColor = Color(0xFFFDFDFD),
     ) { padding ->
@@ -188,15 +193,124 @@ internal fun MessagesContent(
                     contentPadding = PaddingValues(bottom = 24.dp),
                 ) {
                     items(uiState.filteredConversations, key = { it.id }) { conversation ->
-                        ConversationRowItem(
+                        SwipeableConversationRow(
                             conversation = conversation,
-                            onClick = { onOpenChat(conversation.id) },
+                            onOpenChat = { onOpenChat(conversation.id) },
+                            onDeleteRequest = { conversationToDelete = conversation },
                         )
                     }
                 }
             }
         }
     }
+
+    // ── Delete Confirmation Dialog ─────────────────────────────────────────────
+    if (conversationToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { conversationToDelete = null },
+            title = {
+                Text(
+                    text = "Delete Chat",
+                    fontFamily = ComfortaaFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = Color(0xFF1E1E1E),
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete this chat?",
+                    fontFamily = AlbertSansFamily,
+                    fontSize = 14.sp,
+                    color = Color(0xFF555555),
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val idToDelete = conversationToDelete?.id
+                        conversationToDelete = null
+                        if (idToDelete != null) {
+                            onDeleteConversation(idToDelete)
+                        }
+                    }
+                ) {
+                    Text(
+                        text = "Delete",
+                        color = Color(0xFFE53935),
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = AlbertSansFamily,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { conversationToDelete = null }
+                ) {
+                    Text(
+                        text = "Cancel",
+                        color = Color(0xFF7A7A7A),
+                        fontFamily = AlbertSansFamily,
+                    )
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp),
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeableConversationRow(
+    conversation: ChatConversation,
+    onOpenChat: () -> Unit,
+    onDeleteRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { dismissValue ->
+            if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
+                onDeleteRequest()
+                false
+            } else {
+                false
+            }
+        }
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = true,
+        modifier = modifier.clip(RoundedCornerShape(12.dp)),
+        backgroundContent = {
+            val isSwipingDelete = dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (isSwipingDelete) Color(0xFFE53935) else Color.Transparent)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                if (isSwipingDelete) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "Delete chat",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
+        },
+        content = {
+            ConversationRowItem(
+                conversation = conversation,
+                onClick = onOpenChat,
+            )
+        }
+    )
 }
 
 @Composable
@@ -211,6 +325,7 @@ private fun ConversationRowItem(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFFDFDFD))
             .clickable(onClick = onClick)
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
