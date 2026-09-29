@@ -42,6 +42,7 @@ sealed class Screen(val route: String) {
         }
     }
     object Main            : Screen("main")
+    object ArchivedMessages: Screen("archived_messages")
     object ReviewInfo      : Screen("review_info")
     object ChangePassword  : Screen("change_password")
 }

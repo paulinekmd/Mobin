@@ -26,6 +26,7 @@ object DataStoreManager {
     private val RECENT_SEARCHES = stringPreferencesKey("recent_searches_json")
     private val READ_MESSAGE_IDS = stringPreferencesKey("read_message_ids_json")
     private val DELETED_CHAT_IDS = stringSetPreferencesKey("deleted_chat_ids_set")
+    private val ARCHIVED_CHAT_IDS = stringSetPreferencesKey("archived_chat_ids_set")
 
     fun init(context: Context) {
         dataStore = context.dataStore
@@ -115,11 +116,51 @@ object DataStoreManager {
         }
     }
 
+    suspend fun archiveChatForUser(chatId: String) {
+        if (::dataStore.isInitialized) {
+            dataStore.edit { prefs ->
+                val current = prefs[ARCHIVED_CHAT_IDS] ?: emptySet()
+                prefs[ARCHIVED_CHAT_IDS] = current + chatId
+            }
+        }
+    }
+
+    suspend fun unarchiveChatForUser(chatId: String) {
+        if (::dataStore.isInitialized) {
+            dataStore.edit { prefs ->
+                val current = prefs[ARCHIVED_CHAT_IDS] ?: emptySet()
+                prefs[ARCHIVED_CHAT_IDS] = current - chatId
+            }
+        }
+    }
+
+    fun getArchivedChatIds(): Flow<Set<String>> =
+        if (::dataStore.isInitialized) {
+            dataStore.data.map { prefs -> prefs[ARCHIVED_CHAT_IDS] ?: emptySet() }
+        } else {
+            flowOf(emptySet())
+        }
+
+    suspend fun getArchivedChatIdsSnapshot(): Set<String> {
+        return if (::dataStore.isInitialized) {
+            try {
+                val prefs = dataStore.data.first()
+                prefs[ARCHIVED_CHAT_IDS] ?: emptySet()
+            } catch (e: Exception) {
+                emptySet()
+            }
+        } else emptySet()
+    }
+
     suspend fun deleteChatForUser(chatId: String) {
         if (::dataStore.isInitialized) {
             dataStore.edit { prefs ->
-                val current = prefs[DELETED_CHAT_IDS] ?: emptySet()
-                prefs[DELETED_CHAT_IDS] = current + chatId
+                val currentDeleted = prefs[DELETED_CHAT_IDS] ?: emptySet()
+                prefs[DELETED_CHAT_IDS] = currentDeleted + chatId
+                val currentArchived = prefs[ARCHIVED_CHAT_IDS] ?: emptySet()
+                if (currentArchived.contains(chatId)) {
+                    prefs[ARCHIVED_CHAT_IDS] = currentArchived - chatId
+                }
             }
         }
     }

@@ -31,6 +31,9 @@ class ChatRepository {
         private val _conversationsFlow = MutableStateFlow<List<ChatConversation>>(emptyList())
         val conversationsFlow: StateFlow<List<ChatConversation>> = _conversationsFlow
 
+        private val _archivedConversationsFlow = MutableStateFlow<List<ChatConversation>>(emptyList())
+        val archivedConversationsFlow: StateFlow<List<ChatConversation>> = _archivedConversationsFlow
+
         private val _messagesFlow = MutableStateFlow<Map<String, List<ChatMessage>>>(emptyMap())
         val messagesFlow: StateFlow<Map<String, List<ChatMessage>>> = _messagesFlow
 
@@ -204,17 +207,37 @@ class ChatRepository {
             }
 
             val deletedIds = DataStoreManager.getDeletedChatIdsSnapshot()
+            val archivedIds = DataStoreManager.getArchivedChatIdsSnapshot()
             _messagesFlow.value = conversationMap.mapValues { it.value.toList() }
-            _conversationsFlow.value = conversationHeaders.filterNot { deletedIds.contains(it.id) }.reversed()
+            _conversationsFlow.value = conversationHeaders.filter { !deletedIds.contains(it.id) && !archivedIds.contains(it.id) }.reversed()
+            _archivedConversationsFlow.value = conversationHeaders.filter { !deletedIds.contains(it.id) && archivedIds.contains(it.id) }.reversed()
         } catch (e: Exception) {
             android.util.Log.e("ChatRepository", "Failed to refresh remote messages: ${e.message}", e)
         }
     }
 
+    suspend fun archiveChat(chatId: String) = withContext(Dispatchers.IO) {
+        DataStoreManager.archiveChatForUser(chatId)
+        val conv = _conversationsFlow.value.find { it.id == chatId }
+        _conversationsFlow.value = _conversationsFlow.value.filterNot { it.id == chatId }
+        if (conv != null && !_archivedConversationsFlow.value.any { it.id == chatId }) {
+            _archivedConversationsFlow.value = listOf(conv) + _archivedConversationsFlow.value
+        }
+    }
+
+    suspend fun unarchiveChat(chatId: String) = withContext(Dispatchers.IO) {
+        DataStoreManager.unarchiveChatForUser(chatId)
+        val conv = _archivedConversationsFlow.value.find { it.id == chatId }
+        _archivedConversationsFlow.value = _archivedConversationsFlow.value.filterNot { it.id == chatId }
+        if (conv != null && !_conversationsFlow.value.any { it.id == chatId }) {
+            _conversationsFlow.value = listOf(conv) + _conversationsFlow.value
+        }
+    }
+
     suspend fun deleteChatLocally(chatId: String) = withContext(Dispatchers.IO) {
         DataStoreManager.deleteChatForUser(chatId)
-        val updated = _conversationsFlow.value.filterNot { it.id == chatId }
-        _conversationsFlow.value = updated
+        _conversationsFlow.value = _conversationsFlow.value.filterNot { it.id == chatId }
+        _archivedConversationsFlow.value = _archivedConversationsFlow.value.filterNot { it.id == chatId }
     }
 
     suspend fun getConversations(): Result<List<ChatConversation>> = withContext(Dispatchers.IO) {
@@ -226,8 +249,18 @@ class ChatRepository {
         }
     }
 
+    suspend fun getArchivedConversations(): Result<List<ChatConversation>> = withContext(Dispatchers.IO) {
+        runCatching {
+            if (_archivedConversationsFlow.value.isEmpty()) {
+                refreshRemoteMessages()
+            }
+            _archivedConversationsFlow.value
+        }
+    }
+
     suspend fun getConversation(chatId: String): ChatConversation? = withContext(Dispatchers.IO) {
         val found = _conversationsFlow.value.find { it.id == chatId }
+            ?: _archivedConversationsFlow.value.find { it.id == chatId }
         if (found != null) return@withContext found
 
         val property = propertyRepository.getPropertyById(chatId)
@@ -246,7 +279,18 @@ class ChatRepository {
     }
 
     suspend fun getMessages(chatId: String): List<ChatMessage> = withContext(Dispatchers.IO) {
-        _messagesFlow.value[chatId] ?: emptyList()
+        val direct = _messagesFlow.value[chatId]
+        if (!direct.isNullOrEmpty()) return@withContext direct
+
+        val matchedKey = _messagesFlow.value.keys.firstOrNull { k ->
+            val conv = _conversationsFlow.value.find { it.id == k } ?: _archivedConversationsFlow.value.find { it.id == k }
+            conv?.propertyId == chatId || conv?.propertyName?.equals(chatId, ignoreCase = true) == true
+        }
+        if (matchedKey != null) {
+            _messagesFlow.value[matchedKey] ?: emptyList()
+        } else {
+            emptyList()
+        }
     }
 
     suspend fun sendMessage(chatId: String, text: String): ChatMessage = withContext(Dispatchers.IO) {
@@ -270,6 +314,10 @@ class ChatRepository {
         val updatedMap = _messagesFlow.value.toMutableMap()
         updatedMap[chatId] = currentList
         _messagesFlow.value = updatedMap
+
+        // If it was archived, unarchive it upon sending a new message
+        DataStoreManager.unarchiveChatForUser(chatId)
+        _archivedConversationsFlow.value = _archivedConversationsFlow.value.filterNot { it.id == chatId }
 
         // Local instant update for conversations tab
         val landlordName = property?.ownerName ?: "Landlord"

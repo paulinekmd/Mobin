@@ -1,4 +1,4 @@
-﻿package com.mobin.app.ui.auth
+package com.mobin.app.ui.auth
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

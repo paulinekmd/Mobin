@@ -50,6 +50,7 @@ fun MainScreen(
     onNavigateToCategoryList: (String) -> Unit = {},
     onNavigateToPropertyDetails: (String) -> Unit = {},
     onNavigateToChat: (String) -> Unit = {},
+    onNavigateToArchived: () -> Unit = {},
     onNavigateToReviewInfo: () -> Unit,
     onNavigateToChangePassword: () -> Unit,
     onLogout: () -> Unit,
@@ -150,6 +151,7 @@ fun MainScreen(
             composable("chats") {
                 com.mobin.app.ui.chat.MessagesScreen(
                     onOpenChat = { chatId -> onNavigateToChat(chatId) },
+                    onNavigateToArchived = onNavigateToArchived,
                 )
             }
             composable("profile") {

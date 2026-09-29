@@ -130,6 +130,9 @@ fun MobInNavGraph() {
                 onNavigateToChat = { chatId ->
                     navController.navigate(Screen.Chat.createRoute(chatId))
                 },
+                onNavigateToArchived = {
+                    navController.navigate(Screen.ArchivedMessages.route)
+                },
                 onNavigateToReviewInfo = { navController.navigate(Screen.ReviewInfo.route) },
                 onNavigateToChangePassword = { navController.navigate(Screen.ChangePassword.route) },
                 onLogout = {
@@ -222,6 +225,15 @@ fun MobInNavGraph() {
                 showSuggestions = showSuggestions,
                 initialMessage = initialMessage,
                 onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(Screen.ArchivedMessages.route) {
+            com.mobin.app.ui.chat.ArchivedMessagesScreen(
+                onBack = { navController.popBackStack() },
+                onOpenChat = { chatId ->
+                    navController.navigate(Screen.Chat.createRoute(chatId))
+                },
             )
         }
 

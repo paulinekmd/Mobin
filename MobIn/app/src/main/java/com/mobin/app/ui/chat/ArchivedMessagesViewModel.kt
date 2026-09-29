@@ -9,28 +9,27 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-data class MessagesUiState(
+data class ArchivedMessagesUiState(
     val query: String = "",
-    val selectedTab: String = "All", // "All", "Unread"
     val allConversations: List<ChatConversation> = emptyList(),
     val filteredConversations: List<ChatConversation> = emptyList(),
     val isLoading: Boolean = false,
 )
 
-class MessagesViewModel : ViewModel() {
+class ArchivedMessagesViewModel : ViewModel() {
 
     private val chatRepository = ChatRepository()
 
     private val _uiState = MutableStateFlow(
-        MessagesUiState(
-            allConversations = ChatRepository.conversationsFlow.value,
-            filteredConversations = ChatRepository.conversationsFlow.value,
+        ArchivedMessagesUiState(
+            allConversations = ChatRepository.archivedConversationsFlow.value,
+            filteredConversations = ChatRepository.archivedConversationsFlow.value,
         )
     )
-    val uiState: StateFlow<MessagesUiState> = _uiState
+    val uiState: StateFlow<ArchivedMessagesUiState> = _uiState
 
     init {
-        observeConversations()
+        observeArchivedConversations()
         refresh()
     }
 
@@ -44,47 +43,34 @@ class MessagesViewModel : ViewModel() {
         }
     }
 
-    private fun observeConversations() {
+    private fun observeArchivedConversations() {
         viewModelScope.launch {
-            ChatRepository.conversationsFlow.collectLatest { list ->
+            ChatRepository.archivedConversationsFlow.collectLatest { list ->
                 _uiState.value = _uiState.value.copy(allConversations = list)
-                filterList(_uiState.value.query, _uiState.value.selectedTab)
+                filterList(_uiState.value.query)
             }
         }
     }
 
     fun onQueryChange(newQuery: String) {
         _uiState.value = _uiState.value.copy(query = newQuery)
-        filterList(newQuery, _uiState.value.selectedTab)
+        filterList(newQuery)
     }
 
-    fun selectTab(tab: String) {
-        _uiState.value = _uiState.value.copy(selectedTab = tab)
-        filterList(_uiState.value.query, tab)
-    }
-
-    private fun filterList(query: String, tab: String) {
+    private fun filterList(query: String) {
         val q = query.trim().lowercase()
         val list = _uiState.value.allConversations.filter { conv ->
-            val matchesQuery = q.isBlank() ||
-                    conv.contactName.lowercase().contains(q) ||
-                    conv.propertyName.lowercase().contains(q) ||
-                    conv.lastMessage.lowercase().contains(q)
-
-            val matchesTab = when (tab) {
-                "Unread" -> conv.unreadCount > 0
-                else -> true
-            }
-
-            matchesQuery && matchesTab
+            q.isBlank() ||
+                conv.contactName.lowercase().contains(q) ||
+                conv.propertyName.lowercase().contains(q) ||
+                conv.lastMessage.lowercase().contains(q)
         }
-
         _uiState.value = _uiState.value.copy(filteredConversations = list)
     }
 
-    fun archiveConversation(chatId: String) {
+    fun unarchiveConversation(chatId: String) {
         viewModelScope.launch {
-            chatRepository.archiveChat(chatId)
+            chatRepository.unarchiveChat(chatId)
         }
     }
 
