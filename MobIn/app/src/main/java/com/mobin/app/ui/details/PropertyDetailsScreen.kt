@@ -502,6 +502,19 @@ internal fun PropertyDetailsContent(
 
             // ── Rental Price Section ───────────────────────────────────────────
             Text(
+                text = if (property.availableFrom.startsWith("Available", ignoreCase = true)) {
+                    property.availableFrom
+                } else {
+                    "Available from: ${property.availableFrom}"
+                },
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFFBF6B04),
+                ),
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
                 text = "Rental Price",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,

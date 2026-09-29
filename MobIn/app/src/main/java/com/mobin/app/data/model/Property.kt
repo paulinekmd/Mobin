@@ -21,6 +21,7 @@ data class Property(
     @SerialName("owner_name") val ownerName: String = "Mary Ann Dasalo",
     @SerialName("owner_avatar_url") val ownerAvatarUrl: String? = null,
     @SerialName("owner_joined") val ownerJoined: String = "March 2025",
+    @SerialName("available_from") val availableFrom: String = "Available now",
 )
 
 /**
@@ -48,6 +49,9 @@ data class PropertyDto(
     @SerialName("verification_notes") val verificationNotes: String? = null,
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,
+    @SerialName("available_from") val availableFrom: String? = null,
+    @SerialName("available_date") val availableDate: String? = null,
+    val availability: String? = null,
 ) {
     fun toProperty(
         isSaved: Boolean = false,
@@ -75,6 +79,12 @@ data class PropertyDto(
             else -> "Boarding House"
         }
 
+        val dateText = formatAvailableDate(availableFrom)
+            ?: formatAvailableDate(availableDate)
+            ?: availability?.ifBlank { null }
+            ?: formatAvailableDate(createdAt)
+            ?: "Available now"
+
         return Property(
             id = id.toString(),
             title = propertyName?.ifBlank { null } ?: "Accommodation #$id",
@@ -93,6 +103,30 @@ data class PropertyDto(
             ownerName = landlordName?.ifBlank { null } ?: "Mary Ann Dasalo",
             ownerAvatarUrl = avatarUrl,
             ownerJoined = "March 2025",
+            availableFrom = dateText,
         )
+    }
+
+    private fun formatAvailableDate(dateStr: String?): String? {
+        if (dateStr.isNullOrBlank()) return null
+        return try {
+            val cleanStr = dateStr.trim().take(10)
+            val parts = cleanStr.split("-")
+            if (parts.size == 3 && parts[0].length == 4) {
+                val year = parts[0].toInt()
+                val month = parts[1].toInt()
+                val day = parts[2].toInt()
+                val monthName = when (month) {
+                    1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"; 5 -> "May"; 6 -> "Jun"
+                    7 -> "Jul"; 8 -> "Aug"; 9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
+                    else -> ""
+                }
+                if (monthName.isNotEmpty()) "$monthName $day, $year" else dateStr
+            } else {
+                dateStr
+            }
+        } catch (e: Exception) {
+            dateStr
+        }
     }
 }

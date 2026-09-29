@@ -292,7 +292,34 @@ private fun SavedPropertyCard(
                 )
             }
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(6.dp))
+
+            // Available from (above Rental Price)
+            Text(
+                text = if (property.availableFrom.startsWith("Available", ignoreCase = true)) {
+                    property.availableFrom
+                } else {
+                    "Available from: ${property.availableFrom}"
+                },
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 11.5.sp,
+                    color = Color(0xFF7A7A7A),
+                ),
+            )
+
+            Spacer(Modifier.height(2.dp))
+
+            val formattedPrice = java.text.NumberFormat.getNumberInstance(java.util.Locale.US).format(property.price.toInt())
+            Text(
+                text = "₱$formattedPrice / month",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.5.sp,
+                    color = Color(0xFF2E7D32),
+                ),
+            )
+
+            Spacer(Modifier.height(12.dp))
 
             // View Details Button
             OutlinedButton(

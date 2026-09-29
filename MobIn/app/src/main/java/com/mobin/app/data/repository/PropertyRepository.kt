@@ -27,6 +27,7 @@ class PropertyRepository {
             amenities = listOf("Free WiFi", "CCTV", "Free electricity and water", "Study Area", "Laundry Area"),
             ownerName = "Mary Ann Dasalo",
             ownerJoined = "March 2023",
+            availableFrom = "Oct 1, 2026",
         ),
         Property(
             id = "2",
@@ -42,6 +43,7 @@ class PropertyRepository {
             amenities = listOf("Free WiFi", "Study Area", "Laundry Area", "CCTV"),
             ownerName = "Maria Santos",
             ownerJoined = "January 2024",
+            availableFrom = "Oct 15, 2026",
         ),
         Property(
             id = "3",
@@ -57,6 +59,7 @@ class PropertyRepository {
             amenities = listOf("Free WiFi", "CCTV", "Kitchen Area", "Private Bathroom"),
             ownerName = "John Green",
             ownerJoined = "November 2022",
+            availableFrom = "Nov 1, 2026",
         ),
         Property(
             id = "4",
@@ -72,6 +75,7 @@ class PropertyRepository {
             amenities = listOf("High-speed WiFi", "24/7 Security", "Aircon", "Study Lounge"),
             ownerName = "Student Hub Management",
             ownerJoined = "August 2023",
+            availableFrom = "Oct 5, 2026",
         ),
         Property(
             id = "5",
@@ -87,6 +91,7 @@ class PropertyRepository {
             amenities = listOf("Free WiFi", "CCTV", "Water Refill"),
             ownerName = "Carlos Reyes",
             ownerJoined = "May 2023",
+            availableFrom = "Available now",
         ),
     )
 

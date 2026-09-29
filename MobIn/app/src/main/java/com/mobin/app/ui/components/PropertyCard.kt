@@ -138,6 +138,23 @@ fun PropertyCard(
 
             Spacer(Modifier.height(4.dp))
 
+            // Available from (above Rental Price)
+            Text(
+                text = if (property.availableFrom.startsWith("Available", ignoreCase = true)) {
+                    property.availableFrom
+                } else {
+                    "Available from: ${property.availableFrom}"
+                },
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 10.5.sp,
+                    color = Color(0xFF7A7A7A),
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+
+            Spacer(Modifier.height(2.dp))
+
             // Price
             Text(
                 text = "₱$formattedPrice / month",
