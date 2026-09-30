@@ -27,6 +27,8 @@ object DataStoreManager {
     private val READ_MESSAGE_IDS = stringPreferencesKey("read_message_ids_json")
     private val DELETED_CHAT_IDS = stringSetPreferencesKey("deleted_chat_ids_set")
     private val ARCHIVED_CHAT_IDS = stringSetPreferencesKey("archived_chat_ids_set")
+    private val DELETED_CHAT_LAST_MSG_MAP = stringPreferencesKey("deleted_chat_last_msg_map")
+    private val ARCHIVED_CHAT_LAST_MSG_MAP = stringPreferencesKey("archived_chat_last_msg_map")
 
     fun init(context: Context) {
         dataStore = context.dataStore
@@ -116,11 +118,33 @@ object DataStoreManager {
         }
     }
 
-    suspend fun archiveChatForUser(chatId: String) {
+    suspend fun getArchivedChatLastMsgMapSnapshot(): Map<String, String> {
+        return if (::dataStore.isInitialized) {
+            try {
+                val prefs = dataStore.data.first()
+                val jsonStr = prefs[ARCHIVED_CHAT_LAST_MSG_MAP]
+                if (jsonStr.isNullOrBlank()) emptyMap() else Json.decodeFromString(jsonStr)
+            } catch (e: Exception) {
+                emptyMap()
+            }
+        } else emptyMap()
+    }
+
+    suspend fun archiveChatForUser(chatId: String, lastMsgId: String? = null) {
         if (::dataStore.isInitialized) {
             dataStore.edit { prefs ->
                 val current = prefs[ARCHIVED_CHAT_IDS] ?: emptySet()
                 prefs[ARCHIVED_CHAT_IDS] = current + chatId
+                if (lastMsgId != null) {
+                    val map = try {
+                        val str = prefs[ARCHIVED_CHAT_LAST_MSG_MAP]
+                        if (str.isNullOrBlank()) mutableMapOf() else Json.decodeFromString<MutableMap<String, String>>(str)
+                    } catch (e: Exception) {
+                        mutableMapOf()
+                    }
+                    map[chatId] = lastMsgId
+                    prefs[ARCHIVED_CHAT_LAST_MSG_MAP] = Json.encodeToString(map)
+                }
             }
         }
     }
@@ -130,6 +154,17 @@ object DataStoreManager {
             dataStore.edit { prefs ->
                 val current = prefs[ARCHIVED_CHAT_IDS] ?: emptySet()
                 prefs[ARCHIVED_CHAT_IDS] = current - chatId
+                try {
+                    val str = prefs[ARCHIVED_CHAT_LAST_MSG_MAP]
+                    if (!str.isNullOrBlank()) {
+                        val map = Json.decodeFromString<MutableMap<String, String>>(str)
+                        if (map.remove(chatId) != null) {
+                            prefs[ARCHIVED_CHAT_LAST_MSG_MAP] = Json.encodeToString(map)
+                        }
+                    }
+                } catch (e: Exception) {
+                    // ignore
+                }
             }
         }
     }
@@ -152,7 +187,19 @@ object DataStoreManager {
         } else emptySet()
     }
 
-    suspend fun deleteChatForUser(chatId: String) {
+    suspend fun getDeletedChatLastMsgMapSnapshot(): Map<String, String> {
+        return if (::dataStore.isInitialized) {
+            try {
+                val prefs = dataStore.data.first()
+                val jsonStr = prefs[DELETED_CHAT_LAST_MSG_MAP]
+                if (jsonStr.isNullOrBlank()) emptyMap() else Json.decodeFromString(jsonStr)
+            } catch (e: Exception) {
+                emptyMap()
+            }
+        } else emptyMap()
+    }
+
+    suspend fun deleteChatForUser(chatId: String, lastMsgId: String? = null) {
         if (::dataStore.isInitialized) {
             dataStore.edit { prefs ->
                 val currentDeleted = prefs[DELETED_CHAT_IDS] ?: emptySet()
@@ -160,6 +207,36 @@ object DataStoreManager {
                 val currentArchived = prefs[ARCHIVED_CHAT_IDS] ?: emptySet()
                 if (currentArchived.contains(chatId)) {
                     prefs[ARCHIVED_CHAT_IDS] = currentArchived - chatId
+                }
+                if (lastMsgId != null) {
+                    val map = try {
+                        val str = prefs[DELETED_CHAT_LAST_MSG_MAP]
+                        if (str.isNullOrBlank()) mutableMapOf() else Json.decodeFromString<MutableMap<String, String>>(str)
+                    } catch (e: Exception) {
+                        mutableMapOf()
+                    }
+                    map[chatId] = lastMsgId
+                    prefs[DELETED_CHAT_LAST_MSG_MAP] = Json.encodeToString(map)
+                }
+            }
+        }
+    }
+
+    suspend fun undeleteChatForUser(chatId: String) {
+        if (::dataStore.isInitialized) {
+            dataStore.edit { prefs ->
+                val current = prefs[DELETED_CHAT_IDS] ?: emptySet()
+                prefs[DELETED_CHAT_IDS] = current - chatId
+                try {
+                    val str = prefs[DELETED_CHAT_LAST_MSG_MAP]
+                    if (!str.isNullOrBlank()) {
+                        val map = Json.decodeFromString<MutableMap<String, String>>(str)
+                        if (map.remove(chatId) != null) {
+                            prefs[DELETED_CHAT_LAST_MSG_MAP] = Json.encodeToString(map)
+                        }
+                    }
+                } catch (e: Exception) {
+                    // ignore
                 }
             }
         }

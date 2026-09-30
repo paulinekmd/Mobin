@@ -5,7 +5,10 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -410,29 +413,22 @@ fun SwipeableConversationActionRow(
                 .fillMaxWidth()
                 .offset { IntOffset(offsetX.value.roundToInt(), 0) }
                 .background(Color(0xFFFDFDFD))
-                .pointerInput(Unit) {
-                    detectHorizontalDragGestures(
-                        onDragEnd = {
-                            coroutineScope.launch {
-                                if (offsetX.value < -maxRevealWidthPx / 2.5f) {
-                                    offsetX.animateTo(-maxRevealWidthPx, spring(stiffness = Spring.StiffnessMediumLow))
-                                } else {
-                                    offsetX.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
-                                }
-                            }
-                        },
-                        onDragCancel = {
-                            coroutineScope.launch { offsetX.animateTo(0f) }
-                        },
-                        onHorizontalDrag = { change, dragAmount ->
-                            change.consume()
-                            coroutineScope.launch {
-                                val newOffset = (offsetX.value + dragAmount).coerceIn(-maxRevealWidthPx, 0f)
-                                offsetX.snapTo(newOffset)
-                            }
+                .draggable(
+                    orientation = androidx.compose.foundation.gestures.Orientation.Horizontal,
+                    state = androidx.compose.foundation.gestures.rememberDraggableState { delta ->
+                        coroutineScope.launch {
+                            val target = (offsetX.value + delta).coerceIn(-maxRevealWidthPx, 0f)
+                            offsetX.snapTo(target)
                         }
-                    )
-                }
+                    },
+                    onDragStopped = { velocity: Float ->
+                        if (offsetX.value < -maxRevealWidthPx / 2.5f || velocity < -300f) {
+                            offsetX.animateTo(-maxRevealWidthPx, spring(stiffness = Spring.StiffnessMediumLow))
+                        } else {
+                            offsetX.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+                        }
+                    }
+                )
         ) {
             ConversationRowItem(
                 conversation = conversation,

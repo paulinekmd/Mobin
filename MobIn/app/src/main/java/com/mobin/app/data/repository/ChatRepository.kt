@@ -125,7 +125,11 @@ class ChatRepository {
             }
 
             for (dto in sortedDtos) {
-                val msgText = dto.message?.trim() ?: continue
+                val rawText = dto.message?.trim() ?: continue
+                if (rawText.isBlank()) continue
+                val msgText = if (rawText.startsWith("<!--") && rawText.contains("-->")) {
+                    rawText.substringAfter("-->").trim()
+                } else rawText
                 if (msgText.isBlank()) continue
 
                 val chatId = dto.propertyId?.ifBlank { null } ?: dto.id
@@ -206,8 +210,34 @@ class ChatRepository {
                 )
             }
 
-            val deletedIds = DataStoreManager.getDeletedChatIdsSnapshot()
-            val archivedIds = DataStoreManager.getArchivedChatIdsSnapshot()
+            val deletedIds = DataStoreManager.getDeletedChatIdsSnapshot().toMutableSet()
+            val archivedIds = DataStoreManager.getArchivedChatIdsSnapshot().toMutableSet()
+            val deletedLastMsgMap = DataStoreManager.getDeletedChatLastMsgMapSnapshot()
+            val archivedLastMsgMap = DataStoreManager.getArchivedChatLastMsgMapSnapshot()
+
+            for ((chatId, msgs) in conversationMap) {
+                val latestMsg = msgs.lastOrNull() ?: continue
+                val isFromLandlord = !latestMsg.isFromCurrentUser
+
+                // If landlord sent a new message after deletion, auto-undelete the conversation
+                if (deletedIds.contains(chatId) && isFromLandlord) {
+                    val recordedLastMsgId = deletedLastMsgMap[chatId]
+                    if (recordedLastMsgId == null || recordedLastMsgId != latestMsg.id) {
+                        DataStoreManager.undeleteChatForUser(chatId)
+                        deletedIds.remove(chatId)
+                    }
+                }
+
+                // If landlord sent a new message after archiving, auto-unarchive the conversation
+                if (archivedIds.contains(chatId) && isFromLandlord) {
+                    val recordedLastMsgId = archivedLastMsgMap[chatId]
+                    if (recordedLastMsgId == null || recordedLastMsgId != latestMsg.id) {
+                        DataStoreManager.unarchiveChatForUser(chatId)
+                        archivedIds.remove(chatId)
+                    }
+                }
+            }
+
             _messagesFlow.value = conversationMap.mapValues { it.value.toList() }
             _conversationsFlow.value = conversationHeaders.filter { !deletedIds.contains(it.id) && !archivedIds.contains(it.id) }.reversed()
             _archivedConversationsFlow.value = conversationHeaders.filter { !deletedIds.contains(it.id) && archivedIds.contains(it.id) }.reversed()
@@ -217,7 +247,8 @@ class ChatRepository {
     }
 
     suspend fun archiveChat(chatId: String) = withContext(Dispatchers.IO) {
-        DataStoreManager.archiveChatForUser(chatId)
+        val lastMsgId = _messagesFlow.value[chatId]?.lastOrNull()?.id
+        DataStoreManager.archiveChatForUser(chatId, lastMsgId)
         val conv = _conversationsFlow.value.find { it.id == chatId }
         _conversationsFlow.value = _conversationsFlow.value.filterNot { it.id == chatId }
         if (conv != null && !_archivedConversationsFlow.value.any { it.id == chatId }) {
@@ -235,7 +266,8 @@ class ChatRepository {
     }
 
     suspend fun deleteChatLocally(chatId: String) = withContext(Dispatchers.IO) {
-        DataStoreManager.deleteChatForUser(chatId)
+        val lastMsgId = _messagesFlow.value[chatId]?.lastOrNull()?.id
+        DataStoreManager.deleteChatForUser(chatId, lastMsgId)
         _conversationsFlow.value = _conversationsFlow.value.filterNot { it.id == chatId }
         _archivedConversationsFlow.value = _archivedConversationsFlow.value.filterNot { it.id == chatId }
     }
@@ -315,7 +347,8 @@ class ChatRepository {
         updatedMap[chatId] = currentList
         _messagesFlow.value = updatedMap
 
-        // If it was archived, unarchive it upon sending a new message
+        // If it was archived or deleted, restore it upon sending a new message
+        DataStoreManager.undeleteChatForUser(chatId)
         DataStoreManager.unarchiveChatForUser(chatId)
         _archivedConversationsFlow.value = _archivedConversationsFlow.value.filterNot { it.id == chatId }
 
