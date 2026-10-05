@@ -380,35 +380,6 @@ internal fun PropertyDetailsContent(
 
             Spacer(Modifier.height(20.dp))
 
-            // ── Verified Property Badge ────────────────────────────────────────
-            if (property.isVerified) {
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = Color(0xFFE8F5E9),
-                    modifier = Modifier.wrapContentSize(),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.CheckCircle,
-                            contentDescription = null,
-                            tint = Color(0xFF2E7D32),
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            text = "Verified Property",
-                            color = Color(0xFF2E7D32),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                }
-                Spacer(Modifier.height(12.dp))
-            }
-
             // ── Title & Rating ─────────────────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -501,19 +472,6 @@ internal fun PropertyDetailsContent(
             Spacer(Modifier.height(24.dp))
 
             // ── Rental Price Section ───────────────────────────────────────────
-            Text(
-                text = if (property.availableFrom.startsWith("Available", ignoreCase = true)) {
-                    property.availableFrom
-                } else {
-                    "Available from: ${property.availableFrom}"
-                },
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFFBF6B04),
-                ),
-            )
-            Spacer(Modifier.height(4.dp))
             Text(
                 text = "Rental Price",
                 style = MaterialTheme.typography.titleMedium.copy(
