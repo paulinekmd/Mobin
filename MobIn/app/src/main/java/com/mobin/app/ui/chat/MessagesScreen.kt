@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
@@ -117,17 +118,29 @@ internal fun MessagesContent(
                     Icon(
                         imageVector = Icons.Filled.Search,
                         contentDescription = "Search",
-                        tint = Color(0xFF9E9E9E),
+                        tint = Color(0xFF8C4E03),
                         modifier = Modifier.size(20.dp),
                     )
+                },
+                trailingIcon = {
+                    if (uiState.query.isNotEmpty()) {
+                        IconButton(onClick = { onQueryChange("") }) {
+                            Icon(
+                                imageVector = Icons.Filled.Clear,
+                                contentDescription = "Clear",
+                                tint = Color(0xFF888888),
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    }
                 },
                 singleLine = true,
                 shape = RoundedCornerShape(14.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFFE2E4E8),
-                    unfocusedBorderColor = Color(0xFFE2E4E8),
-                    focusedContainerColor = Color(0xFFF6F6F6),
-                    unfocusedContainerColor = Color(0xFFF6F6F6),
+                    focusedBorderColor = Color(0xFF8C4E03),
+                    unfocusedBorderColor = Color(0xFF8C4E03),
+                    focusedContainerColor = White,
+                    unfocusedContainerColor = White,
                     focusedTextColor = Color(0xFF1E1E1E),
                     unfocusedTextColor = Color(0xFF1E1E1E),
                 ),
