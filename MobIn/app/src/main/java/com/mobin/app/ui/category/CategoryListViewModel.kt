@@ -125,9 +125,8 @@ class CategoryListViewModel : ViewModel() {
                 "3.5 and Above" -> property.rating >= 3.5
                 else -> true
             }
-            val matchesVerified = !filters.verifiedOnly || property.isVerified
 
-            matchesPrice && matchesBeds && matchesRating && matchesVerified
+            matchesPrice && matchesBeds && matchesRating
         }
 
         _uiState.value = _uiState.value.copy(

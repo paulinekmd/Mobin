@@ -3,6 +3,7 @@ package com.mobin.app.ui.category
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -170,7 +171,6 @@ fun CategoryListScreen(
                 onPriceChange = { min, max -> viewModel.updateTempPriceRange(min, max) },
                 onBedsChange = { viewModel.updateTempBeds(it) },
                 onRatingChange = { viewModel.updateTempRating(it) },
-                onVerifiedChange = { viewModel.updateTempVerified(it) },
                 onReset = { viewModel.resetFilters() },
                 onApply = { viewModel.applyFilters() },
             )
@@ -374,7 +374,6 @@ private fun FilterBottomSheetContent(
     onPriceChange: (Float, Float) -> Unit,
     onBedsChange: (Int?) -> Unit,
     onRatingChange: (String) -> Unit,
-    onVerifiedChange: (Boolean) -> Unit,
     onReset: () -> Unit,
     onApply: () -> Unit,
 ) {
@@ -476,10 +475,12 @@ private fun FilterBottomSheetContent(
         Spacer(Modifier.height(10.dp))
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            listOf(1, 2, 3).forEach { count ->
+            listOf(1, 2, 3, 4).forEach { count ->
                 val isSelected = tempState.selectedBeds == count
                 Surface(
                     modifier = Modifier
@@ -494,7 +495,7 @@ private fun FilterBottomSheetContent(
                         fontSize = 12.5.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                         color = if (isSelected) White else Color(0xFF333333),
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                     )
                 }
             }
@@ -557,53 +558,9 @@ private fun FilterBottomSheetContent(
             }
         }
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(24.dp))
 
-        // ── 4. Verified Properties Section ─────────────────────────────────
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column {
-                Text(
-                    text = "Verified Properties",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.5.sp,
-                        color = Color(0xFF1E1E1E),
-                    ),
-                )
-                Row {
-                    Text(
-                        text = "Show verified properties ",
-                        fontSize = 12.sp,
-                        color = Color(0xFF7A7A7A),
-                    )
-                    Text(
-                        text = "only",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFBF6B04),
-                    )
-                }
-            }
-
-            Switch(
-                checked = tempState.verifiedOnly,
-                onCheckedChange = onVerifiedChange,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = White,
-                    checkedTrackColor = GoldenMarigold,
-                    uncheckedThumbColor = White,
-                    uncheckedTrackColor = Color(0xFFDCDCDC),
-                ),
-            )
-        }
-
-        Spacer(Modifier.height(28.dp))
-
-        // ── 5. Action Buttons ──────────────────────────────────────────────
+        // ── 4. Action Buttons ──────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
