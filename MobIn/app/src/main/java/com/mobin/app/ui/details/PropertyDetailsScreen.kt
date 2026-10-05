@@ -196,21 +196,12 @@ internal fun PropertyDetailsContent(
                                 spotColor = Color(0x66FBB81F),
                             ),
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Outlined.ChatBubble,
-                                contentDescription = null,
-                                tint = White,
-                                modifier = Modifier.size(18.dp),
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = "Message Now",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = White,
-                            )
-                        }
+                        Text(
+                            text = "Message Now",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = White,
+                        )
                     }
                 }
             }

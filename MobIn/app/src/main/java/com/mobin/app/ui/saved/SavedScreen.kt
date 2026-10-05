@@ -335,7 +335,7 @@ private fun SavedPropertyCard(
                 ),
             ) {
                 Text(
-                    text = "View Details →",
+                    text = "View Details",
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.5.sp,
                     color = Color(0xFF8C4E03),
