@@ -344,7 +344,6 @@ fun SwipeableConversationActionRow(
                     .width(72.dp)
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
-                    .background(Color(0xFFBF6B04))
                     .clickable {
                         coroutineScope.launch { offsetX.animateTo(0f) }
                         onPrimaryAction()
@@ -358,20 +357,26 @@ fun SwipeableConversationActionRow(
                     Icon(
                         imageVector = if (isArchivedView) Icons.Outlined.Unarchive else Icons.Outlined.Archive,
                         contentDescription = if (isArchivedView) "Unarchive" else "Archive",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp),
+                        tint = Color(0xFFBF6B04),
+                        modifier = Modifier.size(22.dp),
                     )
                     Spacer(Modifier.height(3.dp))
                     Text(
                         text = if (isArchivedView) "Unarchive" else "Archive",
-                        color = Color.White,
-                        fontSize = 11.sp,
+                        color = Color(0xFFBF6B04),
+                        fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 }
             }
 
-            Spacer(Modifier.width(4.dp))
+            // Divider line between Archive and Delete
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(32.dp)
+                    .background(Color(0xFFE0E0E0))
+            )
 
             // Delete Action
             Box(
@@ -379,7 +384,6 @@ fun SwipeableConversationActionRow(
                     .width(72.dp)
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp))
-                    .background(Color(0xFFE53935))
                     .clickable {
                         coroutineScope.launch { offsetX.animateTo(0f) }
                         onDeleteAction()
@@ -393,14 +397,14 @@ fun SwipeableConversationActionRow(
                     Icon(
                         imageVector = Icons.Filled.Delete,
                         contentDescription = "Delete",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp),
+                        tint = Color(0xFFE53935),
+                        modifier = Modifier.size(22.dp),
                     )
                     Spacer(Modifier.height(3.dp))
                     Text(
                         text = "Delete",
-                        color = Color.White,
-                        fontSize = 11.sp,
+                        color = Color(0xFFE53935),
+                        fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 }
