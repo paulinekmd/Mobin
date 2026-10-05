@@ -5,6 +5,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Info
@@ -140,28 +142,51 @@ internal fun ProfileContent(
                         .padding(horizontal = 18.dp, vertical = 20.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    // Circular Avatar (Tap to change - Optional)
+                    // Circular Avatar with Camera Badge (Tap to change)
                     Box(
                         modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF3B3E43))
+                            .size(66.dp)
                             .clickable(onClick = onPickPhoto),
-                        contentAlignment = Alignment.Center,
                     ) {
-                        if (!profile?.avatarUrl.isNullOrBlank()) {
-                            AsyncImage(
-                                model = profile?.avatarUrl,
-                                contentDescription = "Profile photo",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop,
-                            )
-                        } else {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF3B3E43)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (!profile?.avatarUrl.isNullOrBlank()) {
+                                AsyncImage(
+                                    model = profile?.avatarUrl,
+                                    contentDescription = "Profile photo",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop,
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Outlined.Person,
+                                    contentDescription = "Avatar",
+                                    tint = White,
+                                    modifier = Modifier.size(36.dp),
+                                )
+                            }
+                        }
+
+                        // Camera Icon badge on bottom right
+                        Box(
+                            modifier = Modifier
+                                .size(22.dp)
+                                .align(Alignment.BottomEnd)
+                                .clip(CircleShape)
+                                .background(GoldenMarigold)
+                                .border(1.5.dp, White, CircleShape),
+                            contentAlignment = Alignment.Center,
+                        ) {
                             Icon(
-                                imageVector = Icons.Outlined.Person,
-                                contentDescription = "Avatar",
+                                imageVector = Icons.Filled.CameraAlt,
+                                contentDescription = "Change photo",
                                 tint = White,
-                                modifier = Modifier.size(36.dp),
+                                modifier = Modifier.size(12.dp),
                             )
                         }
                     }

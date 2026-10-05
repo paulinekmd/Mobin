@@ -1,4 +1,4 @@
-﻿package com.mobin.app.ui.components
+package com.mobin.app.ui.components
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -18,7 +18,8 @@ import com.mobin.app.ui.theme.White
 fun MobInTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    label: String,
+    label: String = "",
+    labelContent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     readOnly: Boolean = false,
@@ -31,7 +32,7 @@ fun MobInTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
+        label = labelContent ?: if (label.isNotEmpty()) { { Text(label) } } else null,
         modifier = modifier,
         enabled = enabled,
         readOnly = readOnly,
