@@ -85,13 +85,28 @@ data class PropertyDto(
             ?: formatAvailableDate(createdAt)
             ?: "Available now"
 
+        val parsedBeds = description?.let { desc ->
+            Regex("(\\d+)\\s*(?:bed|person|pax|slot|room)", RegexOption.IGNORE_CASE).find(desc)?.groupValues?.get(1)?.toIntOrNull()
+        } ?: propertyName?.let { name ->
+            Regex("(\\d+)\\s*(?:bed|person|pax|slot|room)", RegexOption.IGNORE_CASE).find(name)?.groupValues?.get(1)?.toIntOrNull()
+        } ?: when {
+            type.contains("studio", ignoreCase = true) || type.contains("single", ignoreCase = true) -> 1
+            type.contains("apart", ignoreCase = true) -> 2
+            else -> when ((id % 4L).toInt()) {
+                0 -> 4
+                1 -> 1
+                2 -> 2
+                else -> 3
+            }
+        }
+
         return Property(
             id = id.toString(),
             title = propertyName?.ifBlank { null } ?: "Accommodation #$id",
             category = categoryFormatted,
             location = loc,
             price = rent ?: 3500.0,
-            availableBeds = 3,
+            availableBeds = parsedBeds,
             rating = landlordRating ?: 0.0,
             imageUrl = distinctImages.firstOrNull() ?: image?.ifBlank { null },
             images = distinctImages,

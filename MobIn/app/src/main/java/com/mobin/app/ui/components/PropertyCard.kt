@@ -174,7 +174,7 @@ fun PropertyCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "${property.availableBeds} beds available",
+                    text = "${property.availableBeds} ${if (property.availableBeds == 1) "bed" else "beds"} available",
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,

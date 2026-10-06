@@ -35,7 +35,7 @@ class PropertyRepository {
             category = "Boarding House",
             location = "Urgello, Cebu City",
             price = 3500.0,
-            availableBeds = 3,
+            availableBeds = 2,
             rating = 0.0,
             imageUrl = null,
             isVerified = true,
@@ -51,7 +51,7 @@ class PropertyRepository {
             category = "Apartments",
             location = "Sambag 1, Cebu City",
             price = 3500.0,
-            availableBeds = 3,
+            availableBeds = 1,
             rating = 0.0,
             imageUrl = null,
             isVerified = true,
@@ -67,7 +67,7 @@ class PropertyRepository {
             category = "Dormitories",
             location = "Urgello, Cebu City",
             price = 3500.0,
-            availableBeds = 3,
+            availableBeds = 4,
             rating = 0.0,
             imageUrl = null,
             isVerified = true,
@@ -83,7 +83,7 @@ class PropertyRepository {
             category = "Boarding House",
             location = "Sambag 1, Cebu City",
             price = 3500.0,
-            availableBeds = 3,
+            availableBeds = 2,
             rating = 0.0,
             imageUrl = null,
             isVerified = true,
@@ -159,6 +159,12 @@ class PropertyRepository {
                     android.util.Log.d("PropertyRepository", "Fetched ${dtos.size} properties from Supabase")
                     val properties = dtos.map { dto ->
                         val matchedAvatar = profileList.firstOrNull { prof ->
+                            !prof.avatarUrl.isNullOrBlank() && (
+                                (!dto.landlordId.isNullOrBlank() && prof.id.equals(dto.landlordId, ignoreCase = true)) ||
+                                (!dto.landlordEmail.isNullOrBlank() && prof.email?.equals(dto.landlordEmail, ignoreCase = true) == true) ||
+                                (!dto.landlordName.isNullOrBlank() && prof.fullName?.trim()?.equals(dto.landlordName.trim(), ignoreCase = true) == true)
+                            )
+                        }?.avatarUrl ?: profileList.firstOrNull { prof ->
                             (!dto.landlordId.isNullOrBlank() && prof.id.equals(dto.landlordId, ignoreCase = true)) ||
                             (!dto.landlordEmail.isNullOrBlank() && prof.email?.equals(dto.landlordEmail, ignoreCase = true) == true) ||
                             (!dto.landlordName.isNullOrBlank() && prof.fullName?.trim()?.equals(dto.landlordName.trim(), ignoreCase = true) == true)

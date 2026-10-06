@@ -50,13 +50,15 @@ class LandlordRepository {
         }
 
         // 2. Fetch avatar if not provided
-        var avatarUrl = knownAvatarUrl
+        var avatarUrl = knownAvatarUrl?.ifBlank { null }
         if (avatarUrl.isNullOrBlank()) {
             try {
                 val profiles = supabase.from("profiles")
                     .select()
                     .decodeList<com.mobin.app.data.model.Profile>()
                 avatarUrl = profiles.firstOrNull {
+                    !it.avatarUrl.isNullOrBlank() && it.fullName?.trim()?.equals(cleanName.trim(), ignoreCase = true) == true
+                }?.avatarUrl ?: profiles.firstOrNull {
                     it.fullName?.trim()?.equals(cleanName.trim(), ignoreCase = true) == true
                 }?.avatarUrl
             } catch (e: Exception) {

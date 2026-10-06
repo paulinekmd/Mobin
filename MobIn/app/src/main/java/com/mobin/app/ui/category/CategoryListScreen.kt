@@ -268,7 +268,7 @@ private fun CategoryPropertyCard(
                         color = Color(0xFFF4E4D7), // PeachSand
                     ) {
                         Text(
-                            text = "${property.availableBeds} beds available",
+                            text = "${property.availableBeds} ${if (property.availableBeds == 1) "bed" else "beds"} available",
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color(0xFF8C4E03),

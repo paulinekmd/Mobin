@@ -59,7 +59,8 @@ class PropertyDetailsViewModel : ViewModel() {
                 }
 
                 val realRating = landlordProfile?.overallRating ?: prop.rating
-                val updatedProp = prop.copy(rating = realRating)
+                val realAvatar = landlordProfile?.avatarUrl?.ifBlank { null } ?: prop.ownerAvatarUrl
+                val updatedProp = prop.copy(rating = realRating, ownerAvatarUrl = realAvatar)
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,

@@ -16,8 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
@@ -319,44 +317,7 @@ internal fun ProfileContent(
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
-
-            // ── Support Section ────────────────────────────────────────────────
-            Text(
-                text = "Support",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E1E1E),
-                    fontSize = 15.sp,
-                ),
-            )
-
-            Spacer(Modifier.height(10.dp))
-
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                color = White,
-                border = BorderStroke(1.dp, Color(0xFFEEEEEE)),
-            ) {
-                Column {
-                    ProfileMenuRow(
-                        icon = Icons.Outlined.HelpOutline,
-                        title = "Help Center",
-                        subtitle = "Frequently asked questions and support",
-                        onClick = {},
-                    )
-                    HorizontalDivider(color = Color(0xFFF3F3F3), thickness = 1.dp)
-                    ProfileMenuRow(
-                        icon = Icons.Outlined.ChatBubbleOutline,
-                        title = "Contact Us",
-                        subtitle = "Get in touch with the Mob'in team",
-                        onClick = {},
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(32.dp))
 
             // ── Log Out Button ─────────────────────────────────────────────────
             OutlinedButton(

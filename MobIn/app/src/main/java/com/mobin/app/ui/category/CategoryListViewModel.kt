@@ -10,10 +10,9 @@ import kotlinx.coroutines.launch
 
 data class CategoryFilterState(
     val minPrice: Float = 1500f,
-    val maxPrice: Float = 15000f,
+    val maxPrice: Float = 20000f,
     val selectedBeds: Int? = null,
     val selectedRatingOption: String = "Any rating",
-    val verifiedOnly: Boolean = false,
 )
 
 data class CategoryListUiState(
@@ -108,17 +107,11 @@ class CategoryListViewModel : ViewModel() {
         )
     }
 
-    fun updateTempVerified(verified: Boolean) {
-        _uiState.value = _uiState.value.copy(
-            tempFilterState = _uiState.value.tempFilterState.copy(verifiedOnly = verified)
-        )
-    }
-
     fun applyFilters() {
         val filters = _uiState.value.tempFilterState
         val filtered = _uiState.value.allCategoryProperties.filter { property ->
             val matchesPrice = property.price >= filters.minPrice && property.price <= filters.maxPrice
-            val matchesBeds = filters.selectedBeds == null || property.availableBeds >= filters.selectedBeds
+            val matchesBeds = filters.selectedBeds == null || (if (filters.selectedBeds >= 4) property.availableBeds >= 4 else property.availableBeds == filters.selectedBeds)
             val matchesRating = when (filters.selectedRatingOption) {
                 "4.5 and Above" -> property.rating >= 4.5
                 "4.0 and Above" -> property.rating >= 4.0

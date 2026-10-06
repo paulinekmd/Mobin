@@ -451,7 +451,7 @@ internal fun PropertyDetailsContent(
                     color = Color(0xFFF2ECE6),
                 ) {
                     Text(
-                        text = "${property.availableBeds} beds available",
+                        text = "${property.availableBeds} ${if (property.availableBeds == 1) "bed" else "beds"} available",
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFF4A4F57),
