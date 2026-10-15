@@ -6,8 +6,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.mobin.app.ui.auth.AuthChoiceScreen
 import com.mobin.app.ui.auth.ForgotPasswordScreen
 import com.mobin.app.ui.auth.LoginScreen
+import com.mobin.app.ui.auth.RegisterScreen
 import com.mobin.app.ui.auth.VerificationScreen
 import com.mobin.app.ui.main.MainScreen
 import com.mobin.app.ui.onboarding.OnboardingScreen
@@ -34,8 +36,8 @@ fun MobInNavGraph() {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 },
-                onNavigateToLogin = {
-                    navController.navigate(Screen.Login.route) {
+                onNavigateToAuthChoice = {
+                    navController.navigate(Screen.AuthChoice.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 },
@@ -50,9 +52,20 @@ fun MobInNavGraph() {
         composable(Screen.Onboarding.route) {
             OnboardingScreen(
                 onFinished = {
-                    navController.navigate(Screen.Login.route) {
+                    navController.navigate(Screen.AuthChoice.route) {
                         popUpTo(Screen.Onboarding.route) { inclusive = true }
                     }
+                },
+            )
+        }
+
+        composable(Screen.AuthChoice.route) {
+            AuthChoiceScreen(
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route)
+                },
+                onNavigateToRegister = {
+                    navController.navigate(Screen.Register.route)
                 },
             )
         }
@@ -61,11 +74,37 @@ fun MobInNavGraph() {
             LoginScreen(
                 onLoginSuccess = {
                     navController.navigate(Screen.Main.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                        popUpTo(Screen.AuthChoice.route) { inclusive = true }
                     }
                 },
                 onForgotPassword = {
                     navController.navigate(Screen.ForgotPassword.route)
+                },
+                onNavigateToRegister = {
+                    navController.navigate(Screen.Register.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
+                onBack = {
+                    navController.popBackStack()
+                },
+            )
+        }
+
+        composable(Screen.Register.route) {
+            RegisterScreen(
+                onRegisterSuccess = {
+                    navController.navigate(Screen.Main.route) {
+                        popUpTo(Screen.AuthChoice.route) { inclusive = true }
+                    }
+                },
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
+                    }
+                },
+                onBack = {
+                    navController.popBackStack()
                 },
             )
         }
@@ -136,7 +175,7 @@ fun MobInNavGraph() {
                 onNavigateToReviewInfo = { navController.navigate(Screen.ReviewInfo.route) },
                 onNavigateToChangePassword = { navController.navigate(Screen.ChangePassword.route) },
                 onLogout = {
-                    navController.navigate(Screen.Login.route) {
+                    navController.navigate(Screen.AuthChoice.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 },

@@ -57,6 +57,79 @@ class AuthViewModel : ViewModel() {
         }
     }
 
+    fun signUp(
+        fullName: String,
+        email: String,
+        phone: String?,
+        password: String,
+        confirmPassword: String,
+        onSuccess: () -> Unit,
+    ) {
+        val cleanName = fullName.trim()
+        val cleanEmail = email.trim()
+        val cleanPhone = phone?.trim()
+        val cleanPassword = password.trim()
+        val cleanConfirm = confirmPassword.trim()
+
+        if (cleanName.isBlank()) {
+            _uiState.value = AuthUiState(error = "Please enter your full name.")
+            return
+        }
+        if (cleanEmail.isBlank()) {
+            _uiState.value = AuthUiState(error = "Please enter your email address.")
+            return
+        }
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(cleanEmail).matches()) {
+            _uiState.value = AuthUiState(error = "Please enter a valid email address.")
+            return
+        }
+        if (cleanPassword.isBlank()) {
+            _uiState.value = AuthUiState(error = "Please enter a password.")
+            return
+        }
+        if (cleanPassword.length < 6) {
+            _uiState.value = AuthUiState(error = "Password must be at least 6 characters.")
+            return
+        }
+        if (cleanPassword != cleanConfirm) {
+            _uiState.value = AuthUiState(error = "Passwords do not match.")
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = AuthUiState(isLoading = true)
+            repository.signUp(
+                email = cleanEmail,
+                password = cleanPassword,
+                fullName = cleanName,
+                phone = cleanPhone,
+            ).onSuccess {
+                _uiState.value = AuthUiState(isSuccess = true)
+                onSuccess()
+            }.onFailure { error ->
+                android.util.Log.e("AuthViewModel", "signUp failed for '$cleanEmail'", error)
+                val raw = error.message ?: ""
+                val displayError = when {
+                    raw.contains("User already registered", ignoreCase = true) ||
+                    raw.contains("already registered", ignoreCase = true) ||
+                    raw.contains("user_already_exists", ignoreCase = true) ->
+                        "An account with this email already exists."
+                    raw.contains("rate limit", ignoreCase = true) ||
+                    raw.contains("over_email_send_rate_limit", ignoreCase = true) ->
+                        "Too many attempts. Please try again in a few minutes."
+                    raw.contains("Unable to resolve host", ignoreCase = true) ||
+                    raw.contains("ConnectException", ignoreCase = true) ||
+                    raw.contains("No address associated with hostname", ignoreCase = true) ||
+                    raw.contains("timeout", ignoreCase = true) ->
+                        "Cannot reach server. Please check your internet connection."
+                    else ->
+                        raw.ifBlank { "Failed to create account. Please try again." }
+                }
+                _uiState.value = AuthUiState(error = displayError)
+            }
+        }
+    }
+
     fun sendPasswordResetOtp(email: String, onSuccess: () -> Unit) {
         if (email.isBlank()) {
             _uiState.value = AuthUiState(error = "Please enter your email address.")

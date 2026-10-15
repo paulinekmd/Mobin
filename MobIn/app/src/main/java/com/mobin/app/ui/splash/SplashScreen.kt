@@ -26,7 +26,7 @@ private const val TAG = "SplashScreen"
 @Composable
 fun SplashScreen(
     onNavigateToOnboarding: () -> Unit,
-    onNavigateToLogin: () -> Unit,
+    onNavigateToAuthChoice: () -> Unit,
     onNavigateToMain: () -> Unit,
 ) {
     LaunchedEffect(Unit) {
@@ -58,7 +58,7 @@ fun SplashScreen(
                 false
             }
             Log.d(TAG, "onboarding done = $done")
-            if (done) onNavigateToLogin() else onNavigateToOnboarding()
+            if (done) onNavigateToAuthChoice() else onNavigateToOnboarding()
         }
     }
 

@@ -4,6 +4,7 @@ import com.mobin.app.data.remote.SupabaseClient
 import io.github.jan.supabase.auth.OtpType
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
 import kotlinx.serialization.json.buildJsonObject
@@ -17,6 +18,46 @@ class AuthRepository {
         supabase.auth.signInWith(Email) {
             this.email = email
             this.password = password
+        }
+    }
+
+    suspend fun signUp(
+        email: String,
+        password: String,
+        fullName: String,
+        phone: String? = null,
+    ): Result<Unit> = runCatching {
+        val cleanEmail = email.trim()
+        val cleanPassword = password.trim()
+        val cleanName = fullName.trim()
+        val cleanPhone = phone?.trim()?.ifBlank { null }
+
+        supabase.auth.signUpWith(Email) {
+            this.email = cleanEmail
+            this.password = cleanPassword
+            this.data = buildJsonObject {
+                put("full_name", cleanName)
+                if (cleanPhone != null) put("phone", cleanPhone)
+                put("account_type", "renter")
+                put("role", "renter")
+            }
+        }
+
+        val user = supabase.auth.currentUserOrNull()
+        if (user != null) {
+            try {
+                val profileData = buildJsonObject {
+                    put("id", user.id)
+                    put("email", cleanEmail)
+                    put("full_name", cleanName)
+                    if (cleanPhone != null) put("phone", cleanPhone)
+                    put("account_type", "renter")
+                    put("role", "renter")
+                }
+                supabase.from(com.mobin.app.util.Constants.PROFILES_TABLE).upsert(profileData)
+            } catch (e: Exception) {
+                android.util.Log.w("AuthRepository", "Profile upsert after signup note: ${e.message}")
+            }
         }
     }
 

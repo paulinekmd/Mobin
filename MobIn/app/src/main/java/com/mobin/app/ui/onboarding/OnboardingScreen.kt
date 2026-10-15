@@ -1,4 +1,4 @@
-﻿package com.mobin.app.ui.onboarding
+package com.mobin.app.ui.onboarding
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,6 +42,24 @@ fun OnboardingScreen(onFinished: () -> Unit, viewModel: OnboardingViewModel = vi
                     if (page < pages.lastIndex) scope.launch { pagerState.animateScrollToPage(page + 1) }
                     else viewModel.completeOnboarding(onFinished)
                 },
+            )
+        }
+
+        // Skip button
+        TextButton(
+            onClick = { viewModel.completeOnboarding(onFinished) },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .statusBarsPadding()
+                .padding(end = 16.dp, top = 8.dp),
+        ) {
+            Text(
+                text = "Skip",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontFamily = AlbertSansFamily,
+                    fontWeight = FontWeight.SemiBold,
+                    color = OliveBronze,
+                ),
             )
         }
 

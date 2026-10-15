@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
@@ -34,6 +35,8 @@ import com.mobin.app.ui.theme.*
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onForgotPassword: () -> Unit,
+    onNavigateToRegister: () -> Unit = {},
+    onBack: (() -> Unit)? = null,
     viewModel: AuthViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -57,10 +60,13 @@ fun LoginScreen(
         onPasswordVisibleToggle = { passwordVisible = !passwordVisible },
         onLogin = { viewModel.signIn(email, password, onLoginSuccess) },
         onForgotPassword = onForgotPassword,
+        onNavigateToRegister = onNavigateToRegister,
+        onBack = onBack,
     )
 }
 
 // ── Stateless UI with Tilted Ombre Background ────────────────────────────────
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LoginScreenContent(
     uiState: AuthUiState,
@@ -73,6 +79,8 @@ private fun LoginScreenContent(
     onPasswordVisibleToggle: () -> Unit,
     onLogin: () -> Unit,
     onForgotPassword: () -> Unit,
+    onNavigateToRegister: () -> Unit,
+    onBack: (() -> Unit)? = null,
 ) {
     // Tilted diagonal ombre gradient from top-left golden warm to white center to peach bottom
     val tiltedOmbreBrush = Brush.linearGradient(
@@ -88,6 +96,23 @@ private fun LoginScreenContent(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = Color.Transparent,
+        topBar = {
+            if (onBack != null) {
+                TopAppBar(
+                    title = {},
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = OliveBronze,
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                )
+            }
+        },
     ) { padding ->
         Box(
             modifier = Modifier
@@ -102,7 +127,7 @@ private fun LoginScreenContent(
                     .padding(horizontal = 28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Spacer(modifier = Modifier.height(130.dp))
+                Spacer(modifier = Modifier.height(if (onBack != null) 36.dp else 100.dp))
 
                 // Title in Comfortaa font
                 Text(
@@ -257,7 +282,35 @@ private fun LoginScreenContent(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // ── Switch to Register Link ───────────────────────────────────
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(bottom = 36.dp),
+                ) {
+                    Text(
+                        text = "Don't have an account? ",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = AlbertSansFamily,
+                            color = Color(0xFF555555),
+                            fontSize = 14.sp,
+                        ),
+                    )
+                    Text(
+                        text = "Register",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = AlbertSansFamily,
+                            color = GoldenMarigold,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                        ),
+                        modifier = Modifier
+                            .clickable(onClick = onNavigateToRegister)
+                            .padding(vertical = 8.dp, horizontal = 4.dp),
+                    )
+                }
             }
         }
     }
@@ -279,6 +332,8 @@ private fun LoginScreenPreview() {
             onPasswordVisibleToggle = {},
             onLogin = {},
             onForgotPassword = {},
+            onNavigateToRegister = {},
+            onBack = {},
         )
     }
 }
