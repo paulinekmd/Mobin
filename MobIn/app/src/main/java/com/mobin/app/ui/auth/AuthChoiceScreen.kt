@@ -1,5 +1,6 @@
 package com.mobin.app.ui.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -15,6 +16,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import com.mobin.app.R
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,29 +58,15 @@ fun AuthChoiceScreen(
             Spacer(modifier = Modifier.weight(0.9f))
 
             // ── App Brand Icon ──────────────────────────────────────────────
-            Box(
+            Image(
+                painter = painterResource(id = R.drawable.ic_splash_logo),
+                contentDescription = "Mob'in Logo",
                 modifier = Modifier
-                    .size(108.dp)
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = RoundedCornerShape(24.dp),
-                        ambientColor = Color(0x33FBB81F),
-                        spotColor = Color(0x66FBB81F),
-                    )
-                    .background(GoldenMarigold, shape = RoundedCornerShape(24.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "M",
-                    style = MaterialTheme.typography.displayMedium.copy(
-                        fontFamily = ComfortaaFamily,
-                        fontWeight = FontWeight.Bold,
-                        color = White,
-                    ),
-                )
-            }
+                    .width(180.dp)
+                    .height(128.dp),
+            )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // ── App Title ───────────────────────────────────────────────────
             Text(

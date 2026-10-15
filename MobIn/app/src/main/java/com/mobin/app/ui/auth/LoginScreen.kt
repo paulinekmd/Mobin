@@ -1,8 +1,11 @@
 package com.mobin.app.ui.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.res.painterResource
+import com.mobin.app.R
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -127,7 +130,17 @@ private fun LoginScreenContent(
                     .padding(horizontal = 28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Spacer(modifier = Modifier.height(if (onBack != null) 36.dp else 100.dp))
+                Spacer(modifier = Modifier.height(if (onBack != null) 12.dp else 40.dp))
+
+                Image(
+                    painter = painterResource(id = R.drawable.ic_splash_logo),
+                    contentDescription = "Mob'in Logo",
+                    modifier = Modifier
+                        .width(130.dp)
+                        .height(92.dp),
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 // Title in Comfortaa font
                 Text(
@@ -141,7 +154,7 @@ private fun LoginScreenContent(
                     textAlign = TextAlign.Center,
                 )
 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(36.dp))
 
                 // ── Email Input Field ─────────────────────────────────────────
                 Column(modifier = Modifier.fillMaxWidth()) {
