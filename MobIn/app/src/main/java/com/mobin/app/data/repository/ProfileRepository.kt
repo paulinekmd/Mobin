@@ -8,6 +8,7 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.storage.storage
 import io.ktor.http.ContentType
+import kotlinx.serialization.json.put
 
 class ProfileRepository {
 
@@ -26,8 +27,12 @@ class ProfileRepository {
     suspend fun updateProfile(update: ProfileUpdate): Result<Unit> = runCatching {
         val userId = supabase.auth.currentUserOrNull()?.id
             ?: error("User not logged in")
+        val data = kotlinx.serialization.json.buildJsonObject {
+            update.fullName?.let { put("full_name", it) }
+            update.avatarUrl?.let { put("avatar_url", it) }
+        }
         supabase.from(Constants.PROFILES_TABLE)
-            .update(update) {
+            .update(data) {
                 filter { eq("id", userId) }
             }
     }

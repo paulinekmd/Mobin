@@ -50,8 +50,6 @@ class AuthRepository {
                     put("id", user.id)
                     put("email", cleanEmail)
                     put("full_name", cleanName)
-                    if (cleanPhone != null) put("phone", cleanPhone)
-                    put("account_type", "renter")
                     put("role", "renter")
                 }
                 supabase.from(com.mobin.app.util.Constants.PROFILES_TABLE).upsert(profileData)

@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.res.painterResource
 import com.mobin.app.R
+import io.github.jan.supabase.auth.auth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -49,6 +50,7 @@ fun RegisterScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var showSuccessDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.error) {
@@ -56,6 +58,51 @@ fun RegisterScreen(
             snackbarHostState.showSnackbar(it)
             viewModel.clearError()
         }
+    }
+
+    if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showSuccessDialog = false
+                onNavigateToLogin()
+            },
+            title = {
+                Text(
+                    text = "Registration Successful",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontFamily = ComfortaaFamily,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E1E1E),
+                    ),
+                )
+            },
+            text = {
+                Text(
+                    text = "Your account has been created successfully! A verification email has been sent to $email. Please check your inbox and verify your email before logging in.",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontFamily = AlbertSansFamily,
+                        color = OliveBronze,
+                    ),
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSuccessDialog = false
+                        onNavigateToLogin()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GoldenMarigold,
+                        contentColor = Color(0xFF1E1E1E),
+                    ),
+                    shape = RoundedCornerShape(50),
+                ) {
+                    Text("Proceed to Log In", fontFamily = AlbertSansFamily, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(20.dp),
+        )
     }
 
     RegisterScreenContent(
@@ -82,7 +129,14 @@ fun RegisterScreen(
                 phone = phone,
                 password = password,
                 confirmPassword = confirmPassword,
-                onSuccess = onRegisterSuccess,
+                onSuccess = {
+                    val session = com.mobin.app.data.remote.SupabaseClient.client.auth.currentSessionOrNull()
+                    if (session != null) {
+                        onRegisterSuccess()
+                    } else {
+                        showSuccessDialog = true
+                    }
+                },
             )
         },
         onNavigateToLogin = onNavigateToLogin,
